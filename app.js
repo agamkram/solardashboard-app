@@ -598,7 +598,7 @@
       $("h-burn-s").textContent = `type ${type.n} · no UV`;
       $("h-vitd").innerHTML = `0<span class="u">IU/h</span>`;
       $("h-dose").textContent = "—";
-      $("h-risk").textContent = "None · sun down";
+      $("h-risk").textContent = "None";
       $("h-risk").className = "v sm ok";
       $("h-risk-s").textContent = `${type.h} · no UV`;
     } else {
@@ -613,11 +613,7 @@
       const doseMin = Math.max(5, Math.round((1000 / Math.max(vitd, 1)) * 60));
       $("h-dose").innerHTML = `~${doseMin}<span class="u">min</span>`;
       $("h-risk").textContent =
-        burnMin < 20
-          ? "High · cover or shade soon"
-          : burnMin < 40
-            ? "Moderate · watch the clock"
-            : "Lower · still possible";
+        burnMin < 20 ? "High" : burnMin < 40 ? "Moderate" : "Lower";
       $("h-risk").className =
         burnMin < 20 ? "v sm hot" : burnMin < 40 ? "v sm amber" : "v sm ok";
       $("h-risk-s").textContent = `${type.h} · UV + cloud + skin + elev`;
