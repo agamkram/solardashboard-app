@@ -779,25 +779,33 @@
       appEl.style.height = "";
 
       // Layout viewport ≠ visible area on iOS Safari; use visualViewport.
-      if (vv) {
+      // VV already excludes browser chrome / home-indicator band — do not
+      // also apply env(safe-area-inset-bottom) or you get ~½″ empty below.
+      if (vv && vv.height > 0) {
+        stage.classList.add("fit-stage--vv");
         stage.style.position = "fixed";
-        stage.style.top = `${vv.offsetTop}px`;
-        stage.style.left = `${vv.offsetLeft}px`;
-        stage.style.width = `${vv.width}px`;
-        stage.style.height = `${Math.max(vv.height, 1)}px`;
+        stage.style.top = `${Math.round(vv.offsetTop)}px`;
+        stage.style.left = `${Math.round(vv.offsetLeft)}px`;
+        stage.style.width = `${Math.round(vv.width)}px`;
+        stage.style.height = `${Math.round(vv.height)}px`;
         stage.style.right = "auto";
         stage.style.bottom = "auto";
+        stage.style.margin = "0";
       } else {
+        stage.classList.remove("fit-stage--vv");
         stage.style.position = "fixed";
         stage.style.inset = "0";
         stage.style.width = "";
         stage.style.height = "";
+        stage.style.top = "";
+        stage.style.left = "";
       }
       update();
       return;
     }
 
     // Desktop / tablet — clear phone VV pin
+    stage.classList.remove("fit-stage--vv");
     stage.style.position = "fixed";
     stage.style.inset = "0";
     stage.style.top = "";
@@ -806,6 +814,7 @@
     stage.style.bottom = "";
     stage.style.width = "";
     stage.style.height = "";
+    stage.style.margin = "";
 
     const ART_W = 390;
     const ART_H = 844;

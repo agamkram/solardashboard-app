@@ -67,9 +67,9 @@
       transform-origin: center center;
     }
 
-    /* Same face as hub “Web apps” (Michroma); row ~⅜″ */
+    /* Michroma like hub; solid fill (not stroke/wireframe); row ~⅜″ */
     .app-header {
-      height: 0.375in; /* 3/8″ = 36 CSS px */
+      height: 0.375in;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -80,18 +80,18 @@
       margin: 0;
       font-family: "Michroma", "DM Sans", system-ui, sans-serif;
       font-weight: 400;
-      font-size: 0.22in; /* sits inside ⅜″ row with a little air */
-      letter-spacing: 0.04em;
-      line-height: 1;
+      font-size: 0.22in;
+      letter-spacing: 0.1em;
+      line-height: 1.15;
       color: var(--text);
       text-align: center;
+      text-transform: uppercase;
     }
 
     /*
-     * Phone: fluid full-bleed, no scale.
-     * Stage is sized to visualViewport in JS (kills ~½″ dead band below
-     * home indicator / Safari chrome — same fight as other Mark apps).
-     * Edge air ~1/8″ or safe-area, matching Solar Light.
+     * Phone: fluid full-bleed. Stage sized to visualViewport in JS.
+     * Important: do NOT also pad env(safe-area-inset-bottom) when VV is used —
+     * that double-counts the home indicator and leaves ~½″ of dead space.
      */
     @media (max-width: 500px) {
       .fit-stage {
@@ -99,28 +99,30 @@
         flex-direction: column;
         align-items: stretch;
         justify-content: flex-start;
-        /* JS sets top/left/width/height from visualViewport when available */
         padding:
-          max(0.125in, env(safe-area-inset-top, 0px))
-          max(0.125in, env(safe-area-inset-right, 0px))
-          max(0.125in, env(safe-area-inset-bottom, 0px))
-          max(0.125in, env(safe-area-inset-left, 0px));
+          max(0.1in, env(safe-area-inset-top, 0px))
+          max(0.1in, env(safe-area-inset-right, 0px))
+          0.08in
+          max(0.1in, env(safe-area-inset-left, 0px));
+      }
+      /* When JS pins VV, class toggles bottom pad off fully */
+      .fit-stage.fit-stage--vv {
+        padding-bottom: 0.06in;
       }
       .app {
         width: 100%;
         flex: 1 1 auto;
         min-height: 0;
-        height: auto;
+        height: auto !important;
         max-width: none;
         max-height: none;
         transform: none !important;
-        /* Safe-area already on stage — don’t double-pad the bottom */
         padding: 0;
-        gap: 4px;
+        gap: 3px;
       }
       .skin-bar {
-        /* last control sits on the stage’s bottom padding edge */
         margin-bottom: 0;
+        border-bottom: none;
       }
     }
 
