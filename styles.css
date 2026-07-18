@@ -245,10 +245,9 @@
       font-size: 9px;
       color: var(--faint);
       margin-top: 1px;
-      white-space: normal;
-      overflow: visible;
-      line-height: 1.2;
-      /* spell out subtitles — no … truncation */
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     /* ── Sky + time (takes remaining height — the centerpiece) ── */
