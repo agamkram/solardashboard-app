@@ -797,11 +797,25 @@
   }
 
   let fitRaf = 0;
+  let hasRevealed = false;
+  let revealFailsafe = null;
+
   function scheduleFit() {
     cancelAnimationFrame(fitRaf);
     fitRaf = requestAnimationFrame(() => {
       fitRaf = requestAnimationFrame(() => fitArtboard());
     });
+  }
+
+  /** Show board only after layout math is applied (no startup jump). */
+  function revealApp(appEl) {
+    if (!appEl || hasRevealed) return;
+    hasRevealed = true;
+    appEl.classList.add("is-fitted");
+    if (revealFailsafe != null) {
+      clearTimeout(revealFailsafe);
+      revealFailsafe = null;
+    }
   }
 
   function fitArtboard() {
@@ -843,6 +857,11 @@
         stage.style.left = "";
       }
       update();
+      // One more frame so flex/sky sizes settle before first paint
+      requestAnimationFrame(() => {
+        update();
+        revealApp(appEl);
+      });
       return;
     }
 
@@ -870,6 +889,10 @@
     const scale = Math.min(sw / ART_W, sh / ART_H);
     appEl.style.transform = `scale(${scale})`;
     update();
+    requestAnimationFrame(() => {
+      update();
+      revealApp(appEl);
+    });
   }
 
   window.addEventListener("resize", scheduleFit);
@@ -910,4 +933,9 @@
 
   requestLocation();
   scheduleFit();
+  // Never leave a blank screen if fit is slow
+  revealFailsafe = setTimeout(() => {
+    const appEl = document.getElementById("app");
+    if (appEl) revealApp(appEl);
+  }, 400);
 })();

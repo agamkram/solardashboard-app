@@ -67,6 +67,11 @@
       transform-origin: center center;
     }
 
+    /* Hide until first fit — kills startup resize jump (same idea as Solar Light) */
+    .app:not(.is-fitted) {
+      visibility: hidden;
+    }
+
     /* Michroma like hub; solid fill (not stroke/wireframe); row ~⅜″ */
     .app-header {
       height: 0.375in;
