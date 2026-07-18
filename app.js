@@ -527,11 +527,21 @@
   }
 
   function weatherAt(date) {
+    // When following "Now", prefer Open-Meteo current (matches weather apps better).
+    // Hourly is for scrubbing the day slider.
+    if (followNow && forecast?.current) {
+      return { ...forecast.current, source: "current" };
+    }
     if (!forecast?.hourly) return null;
-    return Api.hourlyAt(forecast.hourly, forecast.hourly.time, date);
+    const hour = Api.hourlyAt(forecast.hourly, forecast.hourly.time, date);
+    if (hour) hour.source = "hourly";
+    return hour;
   }
 
   function airAt(date) {
+    if (followNow && airQ?.current) {
+      return { ...airQ.current, source: "current" };
+    }
     if (!airQ?.hourly) return null;
     return Api.hourlyAt(airQ.hourly, airQ.hourly.time, date);
   }
@@ -579,7 +589,15 @@
         ? wx.shortwave_radiation
         : clear * 0.7;
     const cloud = wx?.cloud_cover != null ? wx.cloud_cover : null;
-    const uv = wx?.uv_index != null ? wx.uv_index : daylight ? (elev / Math.max(dayEvents.maxElevation, 1)) * 8 : 0;
+    // Use API UV only — never invent high clear-sky UV from elevation
+    // (old fallback elev/maxElev × 8 looked like ~8 under clouds).
+    let uv = 0;
+    if (wx?.uv_index != null && Number.isFinite(Number(wx.uv_index))) {
+      uv = Number(wx.uv_index);
+    } else if (!daylight) {
+      uv = 0;
+    }
+    // else leave 0 / show low — missing data, don't fake noon UV
     const uvClear = wx?.uv_index_clear_sky;
     const csf =
       uvClear > 0.2 && uv != null

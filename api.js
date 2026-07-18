@@ -25,8 +25,17 @@ const Api = (() => {
       longitude: String(lon),
       timezone: "auto",
       forecast_days: "2",
-      current:
-        "cloud_cover,is_day",
+      current: [
+        "cloud_cover",
+        "is_day",
+        "uv_index",
+        "uv_index_clear_sky",
+        "shortwave_radiation",
+        "direct_radiation",
+        "diffuse_radiation",
+        "terrestrial_radiation",
+        "direct_normal_irradiance",
+      ].join(","),
       hourly: [
         "uv_index",
         "uv_index_clear_sky",
