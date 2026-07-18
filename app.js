@@ -606,7 +606,7 @@
     $("c-pct").innerHTML = daylight
       ? `${pct.toFixed(0)}<span class="u">%</span>`
       : "—";
-    $("c-pct").className = daylight ? "v amber" : "v";
+    $("c-pct").className = "v";
 
     const aqi = aq?.us_aqi ?? aq?.european_aqi ?? airQ?.current?.us_aqi;
     $("c-aqi").textContent = aqi != null ? Math.round(aqi) : "—";
