@@ -29,17 +29,20 @@
     .app {
       height: 100dvh;
       width: 100%;
-      max-width: none; /* full bleed — was 430px (phone mock), left iPad ~1/3 empty */
+      max-width: none; /* full bleed on tablet */
       margin: 0 auto;
       display: grid;
-      /* Shorter sky → more vertical room for condition / health cells */
+      /*
+       * Balance: sky remains the visual center, cards get a modest boost.
+       * (Previous cut crushed the path — too aggressive.)
+       */
       grid-template-rows:
         auto
-        minmax(0, 1.15fr)   /* conditions */
-        minmax(100px, 0.55fr) /* sky + time controls (capped short) */
-        minmax(0, 1fr)      /* health */
-        auto;               /* skin */
-      gap: 4px;
+        auto                    /* conditions: natural height */
+        minmax(160px, 34dvh)    /* sky: solid presence, not half the board */
+        auto                    /* health */
+        auto;                   /* skin */
+      gap: 5px;
       padding:
         max(4px, env(safe-area-inset-top))
         max(8px, env(safe-area-inset-right))
@@ -48,50 +51,35 @@
       box-sizing: border-box;
     }
 
-    .band {
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .band .grid {
-      flex: 1 1 auto;
-      min-height: 0;
-      align-content: stretch;
-    }
-
-    .band .grid .cell {
-      min-height: 0;
-      height: 100%;
-    }
-
-    /* Tablet / iPad: slightly larger type so the wide board stays readable */
+    /* Tablet / iPad */
     @media (min-width: 600px) {
       html, body { font-size: 13px; }
       .app {
         gap: 6px;
         grid-template-rows:
           auto
-          minmax(0, 1.2fr)
-          minmax(120px, 0.5fr)
-          minmax(0, 1.05fr)
+          auto
+          minmax(180px, 32dvh)
+          auto
           auto;
       }
-      .cell { min-height: 56px; }
-      .cell .v { font-size: 17px; }
-      .cell .v.sm { font-size: 14px; }
-      .cell { padding: 6px 8px 7px; }
+      .cell {
+        min-height: 52px;
+        padding: 6px 8px 7px;
+      }
+      .cell .v { font-size: 16px; }
+      .cell .v.sm { font-size: 13px; }
     }
 
     @media (min-width: 900px) {
       html, body { font-size: 14px; }
       .app {
-        max-width: 900px; /* optional desk cap; still much wider than phone */
+        max-width: 900px;
         grid-template-rows:
           auto
-          minmax(0, 1.25fr)
-          minmax(130px, 0.48fr)
-          minmax(0, 1.1fr)
+          auto
+          minmax(200px, 30dvh)
+          auto
           auto;
       }
     }
@@ -149,25 +137,19 @@
       padding: 1px 2px 0;
     }
 
-    .grid { display: grid; gap: 3px; }
-    .grid.conds {
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: repeat(3, 1fr); /* stretch taller cells */
-    }
-    .grid.health {
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: repeat(2, 1fr);
-    }
+    .grid { display: grid; gap: 4px; }
+    .grid.conds { grid-template-columns: repeat(4, 1fr); }
+    .grid.health { grid-template-columns: repeat(4, 1fr); }
 
     .cell {
       background: var(--cell);
       border: 1px solid var(--line);
-      padding: 5px 6px 6px;
+      padding: 6px 7px 7px;
       min-width: 0;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      min-height: 48px;
+      min-height: 50px;
     }
 
     .cell.span2 { grid-column: span 2; }
@@ -216,10 +198,9 @@
       text-overflow: ellipsis;
     }
 
-    /* ── Solar Light–style sky + controls (kept short for larger data cells) ── */
+    /* ── Sky + time (centerpiece — modest height, not a postage stamp) ── */
     .sky-block {
       min-height: 0;
-      max-height: 100%;
       display: grid;
       grid-template-rows: minmax(0, 1fr) auto;
       gap: 0;
@@ -229,7 +210,6 @@
     .sky-panel {
       position: relative;
       min-height: 0;
-      max-height: 36dvh;
       border-radius: 12px;
       overflow: hidden;
       box-shadow:
