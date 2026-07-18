@@ -89,9 +89,10 @@
     }
 
     /*
-     * Phone: fluid full-bleed. Stage sized to visualViewport in JS.
-     * Important: do NOT also pad env(safe-area-inset-bottom) when VV is used —
-     * that double-counts the home indicator and leaves ~½″ of dead space.
+     * Phone shell (auto-handled in app.js — no human measuring):
+     * - .fit-stage--vv      → sized to visualViewport (Safari tab chrome)
+     * - .fit-stage--standalone → Home Screen PWA (no browser bottom nav)
+     * - Never combine VV height + large safe-area bottom pad.
      */
     @media (max-width: 500px) {
       .fit-stage {
@@ -102,12 +103,16 @@
         padding:
           max(0.1in, env(safe-area-inset-top, 0px))
           max(0.1in, env(safe-area-inset-right, 0px))
-          0.08in
+          0.06in
           max(0.1in, env(safe-area-inset-left, 0px));
       }
-      /* When JS pins VV, class toggles bottom pad off fully */
+      /* VV pin: tiny bottom air only (chrome already excluded from height) */
       .fit-stage.fit-stage--vv {
-        padding-bottom: 0.06in;
+        padding-bottom: 0.05in;
+      }
+      /* PWA: no Safari toolbar; a hair more bottom air for home indicator */
+      .fit-stage.fit-stage--standalone.fit-stage--vv {
+        padding-bottom: 0.08in;
       }
       .app {
         width: 100%;

@@ -762,31 +762,73 @@
   new ResizeObserver(() => update()).observe(canvas.parentElement);
 
   /**
-   * Phone: pin fit-stage to visualViewport (no ½″ graveyard under the slider).
-   * Tablet/desktop: scale 390×844 artboard proportionally.
+   * Shell detection + viewport fit (no human tuning required).
+   *
+   * Safari tab: bottom toolbar steals height; layout viewport ≠ visible area.
+   * PWA standalone: no toolbar; visual height is mostly full screen.
+   *
+   * Rules we always apply on phone:
+   *  1) Size stage to visualViewport when available (not 100vh alone).
+   *  2) Never stack VV height + env(safe-area-inset-bottom) — double-count = ghost gap.
+   *  3) Standalone vs browser get data-shell for CSS if needed.
+   *  4) Re-fit on VV resize/scroll, orientation, pageshow (bfcache), visibility.
    */
+  function isStandaloneShell() {
+    return (
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.matchMedia("(display-mode: fullscreen)").matches ||
+      // iOS legacy
+      (typeof navigator !== "undefined" && navigator.standalone === true)
+    );
+  }
+
+  function isPhoneShell() {
+    return (
+      window.matchMedia("(max-width: 500px)").matches ||
+      (window.matchMedia("(pointer: coarse)").matches &&
+        Math.min(window.innerWidth, window.innerHeight) <= 500)
+    );
+  }
+
+  function syncShellAttr() {
+    const shell = isStandaloneShell() ? "standalone" : "browser";
+    document.documentElement.dataset.shell = shell;
+    document.body && (document.body.dataset.shell = shell);
+  }
+
+  let fitRaf = 0;
+  function scheduleFit() {
+    cancelAnimationFrame(fitRaf);
+    fitRaf = requestAnimationFrame(() => {
+      fitRaf = requestAnimationFrame(() => fitArtboard());
+    });
+  }
+
   function fitArtboard() {
     const stage = document.getElementById("fit-stage");
     const appEl = document.getElementById("app");
     if (!stage || !appEl) return;
 
-    const phone = window.matchMedia("(max-width: 500px)").matches;
+    syncShellAttr();
+    const phone = isPhoneShell();
     const vv = window.visualViewport;
+    const standalone = isStandaloneShell();
 
     if (phone) {
       appEl.style.transform = "";
       appEl.style.width = "";
       appEl.style.height = "";
 
-      // Layout viewport ≠ visible area on iOS Safari; use visualViewport.
-      // VV already excludes browser chrome / home-indicator band — do not
-      // also apply env(safe-area-inset-bottom) or you get ~½″ empty below.
+      stage.classList.toggle("fit-stage--standalone", standalone);
+      stage.classList.toggle("fit-stage--browser", !standalone);
+
       if (vv && vv.height > 0) {
         stage.classList.add("fit-stage--vv");
         stage.style.position = "fixed";
         stage.style.top = `${Math.round(vv.offsetTop)}px`;
         stage.style.left = `${Math.round(vv.offsetLeft)}px`;
         stage.style.width = `${Math.round(vv.width)}px`;
+        // Prefer VV height; never use layout innerHeight alone on iOS Safari.
         stage.style.height = `${Math.round(vv.height)}px`;
         stage.style.right = "auto";
         stage.style.bottom = "auto";
@@ -804,8 +846,8 @@
       return;
     }
 
-    // Desktop / tablet — clear phone VV pin
-    stage.classList.remove("fit-stage--vv");
+    // Desktop / tablet — clear phone VV pin, proportional artboard scale
+    stage.classList.remove("fit-stage--vv", "fit-stage--standalone", "fit-stage--browser");
     stage.style.position = "fixed";
     stage.style.inset = "0";
     stage.style.top = "";
@@ -830,15 +872,25 @@
     update();
   }
 
-  window.addEventListener("resize", fitArtboard);
-  window.visualViewport?.addEventListener("resize", fitArtboard);
-  window.visualViewport?.addEventListener("scroll", fitArtboard);
+  window.addEventListener("resize", scheduleFit);
+  window.addEventListener("orientationchange", () => setTimeout(scheduleFit, 50));
+  window.visualViewport?.addEventListener("resize", scheduleFit);
+  window.visualViewport?.addEventListener("scroll", scheduleFit);
+  window.matchMedia("(display-mode: standalone)").addEventListener?.("change", scheduleFit);
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
       refreshDay();
       loadWeather();
-      fitArtboard();
+      scheduleFit();
+    }
+  });
+
+  window.addEventListener("pageshow", (e) => {
+    scheduleFit();
+    if (e.persisted && lat != null) {
+      refreshDay();
+      loadWeather();
     }
   });
 
@@ -857,5 +909,5 @@
   }, 15 * 60 * 1000);
 
   requestLocation();
-  fitArtboard();
+  scheduleFit();
 })();
