@@ -691,11 +691,18 @@
     });
   }
 
+  /** Fallback so the sky isn't an empty black hole before GPS. */
+  function useFallbackLocation() {
+    // Asheville NC — matches other Mark apps
+    setLocation(35.5951, -82.5515, "Asheville, NC (tap Edit to change)");
+  }
+
   function requestLocation(userInitiated = false) {
     if (userInitiated) locationText.textContent = "Detecting location…";
     if (!navigator.geolocation) {
       locationText.textContent = "Geolocation unavailable";
-      openLocationDialog();
+      if (userInitiated) openLocationDialog();
+      else useFallbackLocation();
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -710,8 +717,12 @@
         );
       },
       () => {
-        locationText.textContent = "Location denied — set on map";
-        openLocationDialog();
+        if (userInitiated) {
+          locationText.textContent = "Location denied — set on map";
+          openLocationDialog();
+        } else {
+          useFallbackLocation();
+        }
       },
       { enableHighAccuracy: false, timeout: 12000 }
     );
