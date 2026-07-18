@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0c10">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Solar Dashboard">
+  <meta name="description" content="UV, irradiance, air quality, pollen, and sun exposure for your location.">
+  <title>Solar Dashboard</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="loc">
+      <button type="button" id="locate-btn" title="My location" aria-label="My location">◎</button>
+      <div class="place" id="location-text">Detecting location…</div>
+      <button type="button" class="edit" id="manual-location-btn">Edit</button>
+    </div>
+
+    <div>
+      <div class="band-label">Conditions</div>
+      <div class="grid conds">
+        <div class="cell">
+          <div class="k">UV index</div>
+          <div class="v uv" id="c-uv">—</div>
+          <div class="s" id="c-uv-s">—</div>
+        </div>
+        <div class="cell">
+          <div class="k">UVA</div>
+          <div class="v sm" id="c-uva">—</div>
+          <div class="s">deep / aging</div>
+        </div>
+        <div class="cell">
+          <div class="k">UVB</div>
+          <div class="v sm" id="c-uvb">—</div>
+          <div class="s">burn / vit D</div>
+        </div>
+        <div class="cell">
+          <div class="k">Cloud cover</div>
+          <div class="v" id="c-cloud">—</div>
+          <div class="s" id="c-csf">csf —</div>
+        </div>
+        <div class="cell">
+          <div class="k">Irradiance</div>
+          <div class="v sm amber" id="c-toa">—</div>
+          <div class="s">top of atmosphere</div>
+        </div>
+        <div class="cell">
+          <div class="k">Irradiance</div>
+          <div class="v sm" id="c-clear">—</div>
+          <div class="s">ground · ideal</div>
+        </div>
+        <div class="cell">
+          <div class="k">Irradiance</div>
+          <div class="v sm amber" id="c-ground">—</div>
+          <div class="s">at your feet</div>
+        </div>
+        <div class="cell">
+          <div class="k">Ground sunlight</div>
+          <div class="v amber" id="c-pct">—</div>
+          <div class="s">of solar noon</div>
+        </div>
+        <div class="cell">
+          <div class="k">Air quality index</div>
+          <div class="v" id="c-aqi">—</div>
+          <div class="s" id="c-aqi-s">—</div>
+        </div>
+        <div class="cell">
+          <div class="k">Pollen</div>
+          <div class="v sm" id="c-pollen">—</div>
+          <div class="s" id="c-pollen-s">—</div>
+        </div>
+        <div class="cell">
+          <div class="k">Sun elevation</div>
+          <div class="v" id="c-sunel">—</div>
+          <div class="s" id="c-sunaz">az —</div>
+        </div>
+        <div class="cell">
+          <div class="k">Max elevation</div>
+          <div class="v" id="c-maxel">—</div>
+          <div class="s">solar noon</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sky-block">
+      <section class="sky-panel" aria-label="Sun position visualization">
+        <canvas id="sky-canvas"></canvas>
+      </section>
+      <div class="controls">
+        <div class="time-row">
+          <time id="current-time" class="current-time">—</time>
+          <button type="button" id="now-btn" class="now-btn" title="Jump to current time">Now</button>
+        </div>
+        <div class="slider-wrap">
+          <div class="slider-top">
+            <span id="noon-label">Solar Noon —</span>
+          </div>
+          <label for="time-slider" class="visually-hidden">Time of day</label>
+          <div class="slider-track" id="slider-track">
+            <input type="range" id="time-slider" min="0" max="1000" value="500" step="1">
+            <span class="noon-dot" title="Solar noon" aria-hidden="true"></span>
+          </div>
+          <div class="slider-labels">
+            <span id="sunrise-label">Sunrise —</span>
+            <span class="day-length" id="day-length">Day length —</span>
+            <span id="sunset-label">Sunset —</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="band-label">Skin & exposure</div>
+      <div class="grid health">
+        <div class="cell">
+          <div class="k">Time to burn</div>
+          <div class="v hot" id="h-burn">—</div>
+          <div class="s" id="h-burn-s">—</div>
+        </div>
+        <div class="cell">
+          <div class="k">Vit D rate</div>
+          <div class="v sm" id="h-vitd">—</div>
+          <div class="s">estimate</div>
+        </div>
+        <div class="cell">
+          <div class="k">Useful dose</div>
+          <div class="v sm" id="h-dose">—</div>
+          <div class="s">to ~1000 IU</div>
+        </div>
+        <div class="cell">
+          <div class="k">Moonlight</div>
+          <div class="v moon sm" id="h-moon">—</div>
+          <div class="s" id="h-moon-s">—</div>
+        </div>
+        <div class="cell span2">
+          <div class="k">Burn risk now</div>
+          <div class="v sm" id="h-risk">—</div>
+          <div class="s" id="h-risk-s">—</div>
+        </div>
+        <div class="cell">
+          <div class="k">Altitude factor</div>
+          <div class="v" id="h-altf">—</div>
+          <div class="s" id="h-altf-s">—</div>
+        </div>
+        <div class="cell">
+          <div class="k">Moon elevation</div>
+          <div class="v moon" id="c-moonel">—</div>
+          <div class="s" id="c-moonph">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="skin-bar">
+      <div class="lbl">Skin type · Fitzpatrick</div>
+      <div class="skin-slider-col">
+        <div class="skin-scale" aria-hidden="true">
+          <span>I</span><span>II</span><span>III</span><span>IV</span><span>V</span><span>VI</span>
+        </div>
+        <input type="range" id="skin-slider" min="1" max="6" value="3" aria-label="Skin type">
+        <div class="skin-swatches" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <dialog id="location-dialog" class="location-dialog">
+    <form method="dialog" id="location-form">
+      <h2>Set your location</h2>
+      <p class="map-hint">Tap or click the map to place a pin</p>
+      <div id="location-map" class="location-map" role="application" aria-label="Location map"></div>
+      <p id="map-coords" class="map-coords">—</p>
+      <input type="hidden" id="lat-input">
+      <input type="hidden" id="lon-input">
+      <div class="dialog-actions">
+        <button type="button" id="cancel-location" class="secondary-btn">Cancel</button>
+        <button type="submit" class="primary-btn">Apply</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="solar.js"></script>
+  <script src="moon.js"></script>
+  <script src="api.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

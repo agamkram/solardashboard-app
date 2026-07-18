@@ -1,0 +1,436 @@
+:root {
+      --bg: #0a0c10;
+      --cell: #12161e;
+      --cell-hi: #181e28;
+      --line: #2a3140;
+      --text: #e6ebf2;
+      --dim: #7a8496;
+      --faint: #4a5366;
+      --amber: #f5a623;
+      --uv: #b87cff;
+      --ok: #3dce8a;
+      --hot: #e85555;
+      --moon: #c8d0e0;
+      --font: "DM Sans", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 12px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      height: 100dvh;
+      max-width: 430px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-rows:
+        auto
+        auto
+        minmax(0, 1fr)
+        auto
+        auto;
+      gap: 4px;
+      padding: max(4px, env(safe-area-inset-top)) 5px max(4px, env(safe-area-inset-bottom));
+    }
+
+    .loc {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 6px;
+      background: var(--cell);
+      border: 1px solid var(--line);
+      padding: 4px 7px;
+      min-height: 28px;
+    }
+
+    .loc button {
+      border: none;
+      background: none;
+      color: var(--amber);
+      font: inherit;
+      font-size: 13px;
+      line-height: 1;
+      cursor: default;
+      padding: 0;
+    }
+
+    .loc .place {
+      font-weight: 600;
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .loc .meta {
+      color: var(--dim);
+      font-weight: 400;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 10px;
+    }
+
+    .loc .edit {
+      color: var(--dim);
+      font-size: 10px;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .band-label {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--faint);
+      padding: 1px 2px 0;
+    }
+
+    .grid { display: grid; gap: 3px; }
+    .grid.conds { grid-template-columns: repeat(4, 1fr); }
+    .grid.health { grid-template-columns: repeat(4, 1fr); }
+
+    .cell {
+      background: var(--cell);
+      border: 1px solid var(--line);
+      padding: 4px 5px 5px;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 44px;
+    }
+
+    .cell.span2 { grid-column: span 2; }
+
+    .cell .k {
+      font-size: 7.5px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--dim);
+      line-height: 1.2;
+    }
+
+    .cell .v {
+      font-family: "IBM Plex Mono", monospace;
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cell .v.sm { font-size: 12px; }
+    .cell .v.uv { color: var(--uv); }
+    .cell .v.ok { color: var(--ok); }
+    .cell .v.hot { color: var(--hot); }
+    .cell .v.amber { color: var(--amber); }
+    .cell .v.moon { color: var(--moon); }
+
+    .cell .u {
+      font-size: 9px;
+      font-weight: 500;
+      color: var(--dim);
+      margin-left: 1px;
+    }
+
+    .cell .s {
+      font-size: 9px;
+      color: var(--faint);
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── Solar Light–style sky + controls ── */
+    .sky-block {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+      gap: 0;
+    }
+
+    .sky-panel {
+      position: relative;
+      min-height: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    #sky-canvas {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .controls {
+      flex-shrink: 0;
+      padding: 6px 2px 2px;
+    }
+
+    .time-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .current-time {
+      font-size: 1.15rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .now-btn {
+      font-family: var(--font);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid rgba(245, 166, 35, 0.4);
+      background: rgba(245, 166, 35, 0.12);
+      color: var(--amber);
+      cursor: pointer;
+    }
+
+    .now-btn:hover {
+      background: rgba(245, 166, 35, 0.22);
+      border-color: var(--amber);
+    }
+
+    .slider-wrap { margin-bottom: 2px; }
+
+    .slider-track {
+      position: relative;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      --sunrise-pos: 28.3%;
+      --noon-pos: 56.1%;
+      --sunset-pos: 84.0%;
+    }
+
+    /* Marker sits above the range track (track paint hid the old underlay dot). */
+    .noon-dot {
+      position: absolute;
+      left: var(--noon-pos);
+      top: 50%;
+      width: 9px;
+      height: 9px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: #fff4c8;
+      border: 2px solid var(--amber);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.45),
+        0 0 8px rgba(245, 166, 35, 0.75);
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    #time-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(
+        90deg,
+        #1a2744 0%,
+        #3d5a80 calc(var(--sunrise-pos) - 4%),
+        #5a7a50 var(--sunrise-pos),
+        #3d5a80 calc(var(--noon-pos) - 10%),
+        #f5a623 var(--noon-pos),
+        #3d5a80 calc(var(--sunset-pos) - 4%),
+        #5a4a30 var(--sunset-pos),
+        #1a2744 100%
+      );
+      outline: none;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    #time-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fff8e7, var(--amber));
+      box-shadow:
+        0 0 0 3px rgba(245, 166, 35, 0.35),
+        0 2px 8px rgba(0, 0, 0, 0.35);
+      cursor: grab;
+    }
+
+    #time-slider::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border: none;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fff8e7, var(--amber));
+      box-shadow:
+        0 0 0 3px rgba(245, 166, 35, 0.35),
+        0 2px 8px rgba(0, 0, 0, 0.35);
+      cursor: grab;
+    }
+
+    .slider-top {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2px;
+    }
+
+    .slider-top #noon-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--amber);
+    }
+
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+      font-size: 0.68rem;
+      color: var(--dim);
+    }
+
+    .day-length {
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--dim);
+      text-transform: uppercase;
+    }
+
+    .skin-bar {
+      background: var(--cell);
+      border: 1px solid var(--line);
+      padding: 4px 6px 5px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .skin-bar .lbl {
+      font-size: 8px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .skin-slider-col {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .skin-scale {
+      display: flex;
+      justify-content: space-between;
+      font-size: 8px;
+      color: var(--faint);
+      font-family: "IBM Plex Mono", monospace;
+      padding: 0 1px;
+    }
+
+    .skin-bar input[type="range"] {
+      width: 100%;
+      height: 14px;
+      accent-color: var(--amber);
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .skin-swatches {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 1px;
+    }
+
+    .skin-swatches span {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+    }
+
+    .skin-swatches span:nth-child(1) { background: #f5e6d3; }
+    .skin-swatches span:nth-child(2) { background: #e8c4a0; }
+    .skin-swatches span:nth-child(3) { background: #d4a574; }
+    .skin-swatches span:nth-child(4) { background: #b07a4a; }
+    .skin-swatches span:nth-child(5) { background: #8b5a2b; }
+    .skin-swatches span:nth-child(6) { background: #3d2314; }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+
+/* Location dialog */
+.location-dialog {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--cell);
+  color: var(--text);
+  padding: 0;
+  max-width: min(420px, 96vw);
+  width: 100%;
+}
+.location-dialog::backdrop { background: rgba(0,0,0,0.65); }
+.location-dialog form { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.location-dialog h2 { font-size: 1rem; font-weight: 700; }
+.location-dialog .map-hint { font-size: 0.75rem; color: var(--dim); }
+.location-map { height: 220px; border-radius: 8px; border: 1px solid var(--line); z-index: 0; }
+.map-coords { font-family: "IBM Plex Mono", monospace; font-size: 0.75rem; color: var(--dim); }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+.primary-btn, .secondary-btn {
+  font-family: var(--font);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.primary-btn {
+  border: 1px solid rgba(245, 166, 35, 0.5);
+  background: rgba(245, 166, 35, 0.18);
+  color: var(--amber);
+}
+.secondary-btn {
+  border: 1px solid var(--line);
+  background: var(--cell-hi);
+  color: var(--dim);
+}
+.loc button { cursor: pointer; }
+.loc .edit { cursor: pointer; }
