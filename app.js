@@ -150,10 +150,10 @@
       const rows = await res.json();
       if (Array.isArray(rows) && rows.length) {
         const last = rows[rows.length - 1];
-        const v =
-          Number(last.estimated_kp) ||
-          Number(last.kp_index) ||
-          Number(last.Kp);
+        // Prefer estimated_kp; do not use || — Kp of 0 is valid (Quiet)
+        let v = Number(last.estimated_kp);
+        if (!Number.isFinite(v)) v = Number(last.kp_index);
+        if (!Number.isFinite(v)) v = Number(last.Kp);
         kpLatest = Number.isFinite(v) ? v : null;
       }
     } catch (err) {
@@ -678,10 +678,9 @@
     $("h-altf-s").textContent = formatAltitude(terrainAltitudeM);
 
     // Kp (geomagnetic) — global, not location-tied
-    if (kpLatest != null) {
-      $("h-kp").textContent =
-        kpLatest < 10 ? kpLatest.toFixed(1) : String(Math.round(kpLatest));
-      $("h-kp").className = `v ${kpClass(kpLatest)}`;
+    if (kpLatest != null && Number.isFinite(kpLatest)) {
+      $("h-kp").textContent = kpLatest.toFixed(1);
+      $("h-kp").className = `v ${kpClass(kpLatest)}`.trim();
       $("h-kp-s").textContent = kpLabel(kpLatest);
     } else {
       $("h-kp").textContent = "—";
