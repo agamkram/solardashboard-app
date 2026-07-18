@@ -43,6 +43,7 @@
   let trackedDay = null;
   let forecast = null;
   let airQ = null;
+  let kpLatest = null;
   let stars = null;
   let starsKey = "";
   let locationMap = null;
@@ -121,12 +122,53 @@
     return true;
   }
 
+  function kpLabel(kp) {
+    if (kp == null || !Number.isFinite(kp)) return "—";
+    if (kp < 3) return "Quiet";
+    if (kp < 4) return "Unsettled";
+    if (kp < 5) return "Active";
+    if (kp < 6) return "G1 minor";
+    if (kp < 7) return "G2 moderate";
+    if (kp < 8) return "G3 strong";
+    if (kp < 9) return "G4 severe";
+    return "G5 extreme";
+  }
+
+  function kpClass(kp) {
+    if (kp == null || !Number.isFinite(kp)) return "";
+    if (kp < 4) return "ok";
+    if (kp < 5) return "amber";
+    return "hot";
+  }
+
+  async function loadKp() {
+    try {
+      const res = await fetch(
+        "https://services.swpc.noaa.gov/json/planetary_k_index_1m.json"
+      );
+      if (!res.ok) throw new Error(`Kp HTTP ${res.status}`);
+      const rows = await res.json();
+      if (Array.isArray(rows) && rows.length) {
+        const last = rows[rows.length - 1];
+        const v =
+          Number(last.estimated_kp) ||
+          Number(last.kp_index) ||
+          Number(last.Kp);
+        kpLatest = Number.isFinite(v) ? v : null;
+      }
+    } catch (err) {
+      console.warn("Kp fetch failed", err);
+      kpLatest = null;
+    }
+  }
+
   async function loadWeather() {
     if (lat == null || lon == null) return;
     try {
       const [fc, aq] = await Promise.all([
         Api.forecast(lat, lon),
         Api.airQuality(lat, lon).catch(() => null),
+        loadKp(),
       ]);
       forecast = fc;
       airQ = aq;
@@ -600,7 +642,7 @@
       $("h-dose").textContent = "—";
       $("h-risk").textContent = "None";
       $("h-risk").className = "v sm ok";
-      $("h-risk-s").textContent = `${type.h} · no UV`;
+      $("h-risk-s").textContent = type.h;
     } else {
       const burnMin = Math.round(BURN_AT_UV1[skin - 1] / Math.max(uvUse, 0.1));
       $("h-burn").innerHTML = `${burnMin}<span class="u">min</span>`;
@@ -616,7 +658,7 @@
         burnMin < 20 ? "High" : burnMin < 40 ? "Moderate" : "Lower";
       $("h-risk").className =
         burnMin < 20 ? "v sm hot" : burnMin < 40 ? "v sm amber" : "v sm ok";
-      $("h-risk-s").textContent = `${type.h} · UV + cloud + skin + elev`;
+      $("h-risk-s").textContent = type.h;
     }
 
     // Moonlight
@@ -634,6 +676,18 @@
 
     $("h-altf").textContent = altFactor.toFixed(2);
     $("h-altf-s").textContent = formatAltitude(terrainAltitudeM);
+
+    // Kp (geomagnetic) — global, not location-tied
+    if (kpLatest != null) {
+      $("h-kp").textContent =
+        kpLatest < 10 ? kpLatest.toFixed(1) : String(Math.round(kpLatest));
+      $("h-kp").className = `v ${kpClass(kpLatest)}`;
+      $("h-kp-s").textContent = kpLabel(kpLatest);
+    } else {
+      $("h-kp").textContent = "—";
+      $("h-kp").className = "v";
+      $("h-kp-s").textContent = "geomagnetic";
+    }
 
     drawSky(elev, pct, solarTime, moonPos);
   }
@@ -922,10 +976,14 @@
     }
   }, TICK_MS);
 
-  // Refresh weather periodically
+  // Refresh weather + Kp periodically
   setInterval(() => {
     if (lat != null) loadWeather();
+    else loadKp().then(() => update());
   }, 15 * 60 * 1000);
+
+  // Kp is global — load even before GPS settles
+  loadKp().then(() => update());
 
   requestLocation();
   scheduleFit();
