@@ -54,16 +54,37 @@
       height: 844px;
       display: grid;
       grid-template-rows:
-        auto
-        auto
-        minmax(0, 1fr)
-        auto
-        auto;
+        auto   /* title */
+        auto   /* location */
+        auto   /* conditions */
+        minmax(0, 1fr) /* sky */
+        auto   /* health */
+        auto;  /* skin */
       gap: 4px;
       padding: 4px 5px 6px;
       box-sizing: border-box;
       flex-shrink: 0;
       transform-origin: center center;
+    }
+
+    /* Same face as hub “Web apps” (Michroma); row ~⅜″ */
+    .app-header {
+      height: 0.375in; /* 3/8″ = 36 CSS px */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .app-title {
+      margin: 0;
+      font-family: "Michroma", "DM Sans", system-ui, sans-serif;
+      font-weight: 400;
+      font-size: 0.22in; /* sits inside ⅜″ row with a little air */
+      letter-spacing: 0.04em;
+      line-height: 1;
+      color: var(--text);
+      text-align: center;
     }
 
     /*
