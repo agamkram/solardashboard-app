@@ -66,21 +66,40 @@
       transform-origin: center center;
     }
 
-    /* Phone: real full-bleed, no scale */
+    /*
+     * Phone: fluid full-bleed, no scale.
+     * Stage is sized to visualViewport in JS (kills ~½″ dead band below
+     * home indicator / Safari chrome — same fight as other Mark apps).
+     * Edge air ~1/8″ or safe-area, matching Solar Light.
+     */
     @media (max-width: 500px) {
       .fit-stage {
-        display: block;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        /* JS sets top/left/width/height from visualViewport when available */
         padding:
-          max(4px, env(safe-area-inset-top))
-          max(5px, env(safe-area-inset-right))
-          max(4px, env(safe-area-inset-bottom))
-          max(5px, env(safe-area-inset-left));
+          max(0.125in, env(safe-area-inset-top, 0px))
+          max(0.125in, env(safe-area-inset-right, 0px))
+          max(0.125in, env(safe-area-inset-bottom, 0px))
+          max(0.125in, env(safe-area-inset-left, 0px));
       }
       .app {
         width: 100%;
-        height: 100%;
+        flex: 1 1 auto;
+        min-height: 0;
+        height: auto;
         max-width: none;
+        max-height: none;
         transform: none !important;
+        /* Safe-area already on stage — don’t double-pad the bottom */
+        padding: 0;
+        gap: 4px;
+      }
+      .skin-bar {
+        /* last control sits on the stage’s bottom padding edge */
+        margin-bottom: 0;
       }
     }
 

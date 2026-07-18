@@ -762,8 +762,8 @@
   new ResizeObserver(() => update()).observe(canvas.parentElement);
 
   /**
-   * Proportional scale for tablet/desktop: same 390×844 artboard as phone.
-   * Phone (≤500px) stays fluid full-bleed — no transform.
+   * Phone: pin fit-stage to visualViewport (no ½″ graveyard under the slider).
+   * Tablet/desktop: scale 390×844 artboard proportionally.
    */
   function fitArtboard() {
     const stage = document.getElementById("fit-stage");
@@ -771,13 +771,41 @@
     if (!stage || !appEl) return;
 
     const phone = window.matchMedia("(max-width: 500px)").matches;
+    const vv = window.visualViewport;
+
     if (phone) {
       appEl.style.transform = "";
       appEl.style.width = "";
       appEl.style.height = "";
+
+      // Layout viewport ≠ visible area on iOS Safari; use visualViewport.
+      if (vv) {
+        stage.style.position = "fixed";
+        stage.style.top = `${vv.offsetTop}px`;
+        stage.style.left = `${vv.offsetLeft}px`;
+        stage.style.width = `${vv.width}px`;
+        stage.style.height = `${Math.max(vv.height, 1)}px`;
+        stage.style.right = "auto";
+        stage.style.bottom = "auto";
+      } else {
+        stage.style.position = "fixed";
+        stage.style.inset = "0";
+        stage.style.width = "";
+        stage.style.height = "";
+      }
       update();
       return;
     }
+
+    // Desktop / tablet — clear phone VV pin
+    stage.style.position = "fixed";
+    stage.style.inset = "0";
+    stage.style.top = "";
+    stage.style.left = "";
+    stage.style.right = "";
+    stage.style.bottom = "";
+    stage.style.width = "";
+    stage.style.height = "";
 
     const ART_W = 390;
     const ART_H = 844;
@@ -788,7 +816,6 @@
     const sh = stage.clientHeight;
     if (sw < 2 || sh < 2) return;
 
-    // Fill stage, keep proportions (letterbox if needed)
     const scale = Math.min(sw / ART_W, sh / ART_H);
     appEl.style.transform = `scale(${scale})`;
     update();
