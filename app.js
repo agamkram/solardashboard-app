@@ -855,7 +855,12 @@
   nowBtn.addEventListener("click", () => {
     followNow = true;
     syncSliderToNow();
-    update();
+    // Pull fresh Open-Meteo + Kp, then re-render (location stays put)
+    if (lat != null) loadWeather();
+    else {
+      loadKp().then(() => update());
+      update();
+    }
   });
   skinSlider.addEventListener("input", () => {
     try {
