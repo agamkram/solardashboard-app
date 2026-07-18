@@ -546,13 +546,58 @@
     return Api.hourlyAt(airQ.hourly, airQ.hourly.time, date);
   }
 
-  /** UVA/UVB rough split from UV index (estimates). */
-  function estimateUvaUvb(uv, elev) {
-    if (uv <= 0 || elev <= 0) return { uva: 0, uvb: 0 };
-    // Order-of-magnitude: UVB drives index; UVA much larger broadband
-    const uvb = uv * 0.025; // W/m²-ish toy
-    const uva = uv * 6.5;
-    return { uva, uvb };
+  /**
+   * UVA / UVB (W/m²) from UV index + geometry + clouds.
+   *
+   * 1) Erythemal irradiance from UVI (WHO: UVI = 40 × E_ery in W/m²).
+   * 2) Broadband UVB from erythemal with air-mass–aware CIE-effective fraction.
+   * 3) UVA from UVB×(UVA/UVB ratio grows with AM) blended with GHI-based UVA
+   *    when ground shortwave is available (all-sky).
+   *
+   * Still an estimate — not a spectral radiometer.
+   */
+  function estimateUvaUvb(uv, elevDeg, altitudeM, csf, groundWm2) {
+    if (!(uv > 0) || !(elevDeg > 0)) return { uva: 0, uvb: 0, ery: 0 };
+
+    const am = Solar.airMass(elevDeg, altitudeM || 0);
+    const amClamped = Number.isFinite(am) ? Math.min(Math.max(am, 1), 8) : 1.5;
+
+    // WHO / CIE: UV Index = 40 × erythemal irradiance (W/m²)
+    const ery = uv / 40;
+
+    // Fraction of broadband UVB (≈280–315 nm) that is CIE-erythemal effective.
+    // Slightly higher effective fraction when AM is large (short UVB stripped).
+    const fEryOfUvb = 0.085 + 0.012 * Math.min(amClamped - 1, 5);
+    const uvb = ery / Math.max(fEryOfUvb, 0.05);
+
+    // UVA/UVB ratio rises with air mass (UVB attenuates faster than UVA)
+    const uvaUvbRatio = 26 + 5.5 * Math.min(amClamped, 6);
+
+    // Cloud / atmosphere factor already in UVI; optional GHI anchor for UVA
+    let uvaFromUvb = uvb * uvaUvbRatio;
+    let uva = uvaFromUvb;
+
+    if (groundWm2 != null && groundWm2 > 20) {
+      // Empirical: UVA is roughly ~4–7% of broadband GHI, rises a bit with AM
+      const uvaFromGhi =
+        groundWm2 * (0.042 + 0.006 * Math.min(amClamped, 4));
+      // Prefer UVI path; pull toward GHI when both exist (all-sky consistency)
+      const wGhi = 0.45;
+      uva = (1 - wGhi) * uvaFromUvb + wGhi * uvaFromGhi;
+    }
+
+    // Mild CSF sanity: if we have a strong clear-sky UV but low UV, UVA shouldn't
+    // exceed a clear-ish GHI-based ceiling when GHI is known
+    if (csf != null && csf > 0 && csf < 1.05 && groundWm2 > 20) {
+      const uvaCeil = groundWm2 * 0.09;
+      uva = Math.min(uva, uvaCeil);
+    }
+
+    return {
+      uva: Math.max(0, uva),
+      uvb: Math.max(0, uvb),
+      ery: Math.max(0, ery),
+    };
   }
 
   function update() {
@@ -606,15 +651,23 @@
           ? Math.min(1.2, ground / clear)
           : null;
 
-    const { uva, uvb } = estimateUvaUvb(uv, elev);
+    const { uva, uvb } = estimateUvaUvb(
+      uv,
+      elev,
+      terrainAltitudeM,
+      csf,
+      ground
+    );
     const am = elev > 0 ? Solar.airMass(elev, terrainAltitudeM) : null;
     const altFactor = Math.exp(terrainAltitudeM / 8500);
 
     // Cards
     $("c-uv").textContent = daylight ? (uv != null ? Number(uv).toFixed(1) : "—") : "0";
     $("c-uv-s").textContent = Api.uvLabel(daylight ? uv : 0);
-    $("c-uva").innerHTML = `${uva.toFixed(0)}<span class="u">W/m²</span>`;
-    $("c-uvb").innerHTML = `${uvb.toFixed(2)}<span class="u">W/m²</span>`;
+    $("c-uva").innerHTML =
+      uva > 0 ? `${uva.toFixed(0)}<span class="u">W/m²</span>` : "—";
+    $("c-uvb").innerHTML =
+      uvb > 0 ? `${uvb.toFixed(2)}<span class="u">W/m²</span>` : "—";
     $("c-cloud").innerHTML =
       cloud != null ? `${Math.round(cloud)}<span class="u">%</span>` : "—";
     $("c-csf").textContent = csf != null ? `csf ${csf.toFixed(2)}` : "csf —";
