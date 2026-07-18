@@ -60,55 +60,61 @@
       .cell .v.sm { font-size: 13px; }
     }
 
+    @media (min-width: 900px) {
+      html, body { font-size: 14px; }
+      .app { max-width: 960px; }
+    }
+
     /*
-     * iPad / tablet PORTRAIT: sky ~2in shorter; that height goes to the boxes.
-     * 1 CSS in = 96px (device-independent).
+     * Tablet PORTRAIT: sky exactly 2in shorter than “fill the middle”;
+     * that 2in is split into the two card bands (no empty black row).
+     *
+     * rows: loc | conditions(1fr) | sky(fixed) | health(1fr) | skin
+     * sky height = 100dvh − 2in − loc/skin/gaps budget so the leftover
+     * for the two 1fr rows is ~2in + natural card room.
      */
     @media (min-width: 600px) and (orientation: portrait) {
       .app {
         gap: 6px;
         grid-template-rows:
           auto
-          minmax(0, 1.2fr)              /* conditions — absorbs freed space */
-          minmax(140px, calc(42dvh - 2in)) /* sky: prior share minus 2" */
-          minmax(0, 1.15fr)             /* health — absorbs freed space */
+          minmax(0, 1fr)
+          auto
+          minmax(0, 1fr)
           auto;
       }
 
-      .cell {
-        min-height: 58px;
+      .sky-block {
+        /*
+         * Full leftover sky would be ~100dvh − chrome. Subtract 2in.
+         * 26rem reserves loc + skin + gaps + floor for the two card bands
+         * so the 1fr rows actually receive that 2in (+ room to breathe).
+         */
+        height: calc(100dvh - 2in - 26rem);
+        min-height: 14rem;
+        box-sizing: border-box;
+      }
+
+      .band {
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .band .grid {
+        flex: 1 1 auto;
+        min-height: 0;
+        align-content: stretch;
+        gap: 5px;
+      }
+      .grid.conds { grid-template-rows: repeat(3, minmax(0, 1fr)); }
+      .grid.health { grid-template-rows: repeat(2, minmax(0, 1fr)); }
+      .band .cell {
+        min-height: 0;
+        height: 100%;
         padding: 8px 10px;
       }
-
-      .cell .k { font-size: 8.5px; }
-      .cell .v { font-size: 18px; }
-      .cell .v.sm { font-size: 15px; }
-      .cell .s { font-size: 10px; }
-
-      .grid { gap: 5px; }
-
-      .sky-block {
-        max-height: calc(42dvh - 2in);
-      }
-    }
-
-    @media (min-width: 900px) {
-      html, body { font-size: 14px; }
-      .app { max-width: 960px; }
-    }
-
-    @media (min-width: 900px) and (orientation: portrait) {
-      .app {
-        grid-template-rows:
-          auto
-          minmax(0, 1.25fr)
-          minmax(160px, calc(40dvh - 2in))
-          minmax(0, 1.2fr)
-          auto;
-      }
-      .sky-block {
-        max-height: calc(40dvh - 2in);
-      }
+      .band .cell .v { font-size: 17px; }
+      .band .cell .v.sm { font-size: 14px; }
     }
 
     .loc {
