@@ -262,24 +262,21 @@
     };
   }
 
-  function moonOnCircle(moonElev, moonAz, groundY, arcR, arcCx) {
-    // Map alt/az onto same display circle as sun path (visual, not true sky dome)
-    const elevRad = (Math.max(-90, Math.min(90, moonElev)) * Math.PI) / 180;
-    // Compass az 0N 90E 180S 270W → put E left-ish for solar-light style
-    // Use hour-angle style: project with elevation height
-    const azN = ((moonAz % 360) + 360) % 360;
-    // Convert: solar light uses E=π (left) to W=0 (right) on upper half
-    // Approximate moon angle from azimuth: 90°→π, 180°→π/2, 270°→0
-    let angle = Math.PI - ((azN - 90) / 180) * Math.PI;
-    if (moonElev < 0) {
-      angle = -((azN - 90) / 180) * Math.PI;
-    }
+  /**
+   * Pin moon to the SAME path circle as the sun (Solar Light style).
+   * Angle from local hour angle: meridian (H=0) at top, east before, west after.
+   * Continuous on the circle — no free-roam sky projection.
+   */
+  function moonOnCircle(moonPos, groundY, arcR, arcCx) {
     const r = arcR * 0.94;
-    // Prefer elevation-based height on circle
-    const y = groundY - Math.sin(elevRad) * r;
-    const xFrac = Math.max(-0.05, Math.min(1.05, (azN - 90) / 180));
-    const x = arcCx - r + xFrac * 2 * r;
-    return { x, y, below: moonElev < 0 };
+    // H: (−π, π], 0 = south meridian. Display: top = π/2, E = π, W = 0, bottom = −π/2
+    const H = Number.isFinite(moonPos.hourAngle) ? moonPos.hourAngle : 0;
+    const angle = Math.PI / 2 - H;
+    return {
+      x: arcCx + Math.cos(angle) * r,
+      y: groundY - Math.sin(angle) * r,
+      below: moonPos.elevation < 0,
+    };
   }
 
   function drawSun(sunX, sunY, groundY, w, belowHorizon, straddlesHorizon, night) {
@@ -310,15 +307,23 @@
     ctx.restore();
   }
 
-  function drawMoon(x, y, groundY, w, below, night, phase) {
+  /**
+   * Draw moon with correct phase shape (sphere terminator = half-ellipse).
+   * Old offset-circle trick made ~17% look ~half-lit (~65% visual).
+   * @param {number} fraction illuminated 0–1
+   * @param {boolean} waxing light on the right (N-hemisphere evening convention)
+   */
+  function drawMoon(x, y, groundY, w, below, night, fraction, waxing) {
     const r = 9;
+    const f = Math.max(0, Math.min(1, fraction));
     ctx.save();
     if (!below) {
       ctx.beginPath();
       ctx.rect(0, 0, w, groundY);
       ctx.clip();
     }
-    ctx.globalAlpha = below ? 0.16 : 0.5 + 0.5 * night;
+    ctx.globalAlpha = below ? 0.16 : 0.55 + 0.45 * night;
+
     if (!below && night > 0.15) {
       const glow = ctx.createRadialGradient(x, y, 0, x, y, r * 3.2);
       glow.addColorStop(0, "rgba(200, 210, 230, 0.22)");
@@ -328,19 +333,59 @@
       ctx.arc(x, y, r * 3.2, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    // Unlit disc
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fillStyle = "#d8dee8";
+    ctx.fillStyle = "#2a303c";
     ctx.fill();
+
+    if (f >= 0.99) {
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = "#e4e8f0";
+      ctx.fill();
+      ctx.restore();
+      return;
+    }
+    if (f <= 0.01) {
+      ctx.restore();
+      return;
+    }
+
+    // Lit region clipped to disc. cos(i) = 2f − 1 → ellipse half-width.
+    const cosI = 2 * f - 1;
+    const rx = Math.abs(cosI) * r;
+    const lit = "#e4e8f0";
+
+    ctx.save();
     ctx.beginPath();
-    ctx.arc(x, y, r + 0.5, 0, Math.PI * 2);
+    ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.clip();
-    const p = Math.max(0.05, Math.min(0.95, phase));
-    const shadowX = x + (p - 0.5) * 2 * r * 1.15;
-    ctx.fillStyle = "#0c1018";
+    ctx.fillStyle = lit;
     ctx.beginPath();
-    ctx.arc(shadowX, y, r * 0.98, 0, Math.PI * 2);
+
+    if (waxing) {
+      // Light on the right
+      if (f <= 0.5) {
+        ctx.arc(x, y, r, -Math.PI / 2, Math.PI / 2, false);
+        ctx.ellipse(x, y, rx, r, 0, Math.PI / 2, -Math.PI / 2, true);
+      } else {
+        ctx.arc(x, y, r, -Math.PI / 2, Math.PI / 2, false);
+        ctx.ellipse(x, y, rx, r, 0, Math.PI / 2, -Math.PI / 2, false);
+      }
+    } else {
+      // Light on the left
+      if (f <= 0.5) {
+        ctx.arc(x, y, r, Math.PI / 2, -Math.PI / 2, false);
+        ctx.ellipse(x, y, rx, r, 0, -Math.PI / 2, Math.PI / 2, true);
+      } else {
+        ctx.arc(x, y, r, Math.PI / 2, -Math.PI / 2, false);
+        ctx.ellipse(x, y, rx, r, 0, -Math.PI / 2, Math.PI / 2, false);
+      }
+    }
     ctx.fill();
+    ctx.restore();
     ctx.restore();
   }
 
@@ -409,8 +454,17 @@
     ctx.setLineDash([]);
 
     if (moonPos) {
-      const m = moonOnCircle(moonPos.elevation, moonPos.azimuth, groundY, arcR, arcCx);
-      drawMoon(m.x, m.y, groundY, w, m.below, colors.night, moonPos.phase);
+      const m = moonOnCircle(moonPos, groundY, arcR, arcCx);
+      drawMoon(
+        m.x,
+        m.y,
+        groundY,
+        w,
+        m.below,
+        colors.night,
+        moonPos.phase,
+        moonPos.waxing !== false
+      );
     }
 
     const { x: sunX, y: sunY } = sunOnCircle(solarTime, groundY, arcR, arcCx);
