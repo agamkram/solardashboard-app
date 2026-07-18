@@ -761,10 +761,48 @@
 
   new ResizeObserver(() => update()).observe(canvas.parentElement);
 
+  /**
+   * Proportional scale for tablet/desktop: same 390×844 artboard as phone.
+   * Phone (≤500px) stays fluid full-bleed — no transform.
+   */
+  function fitArtboard() {
+    const stage = document.getElementById("fit-stage");
+    const appEl = document.getElementById("app");
+    if (!stage || !appEl) return;
+
+    const phone = window.matchMedia("(max-width: 500px)").matches;
+    if (phone) {
+      appEl.style.transform = "";
+      appEl.style.width = "";
+      appEl.style.height = "";
+      update();
+      return;
+    }
+
+    const ART_W = 390;
+    const ART_H = 844;
+    appEl.style.width = `${ART_W}px`;
+    appEl.style.height = `${ART_H}px`;
+
+    const sw = stage.clientWidth;
+    const sh = stage.clientHeight;
+    if (sw < 2 || sh < 2) return;
+
+    // Fill stage, keep proportions (letterbox if needed)
+    const scale = Math.min(sw / ART_W, sh / ART_H);
+    appEl.style.transform = `scale(${scale})`;
+    update();
+  }
+
+  window.addEventListener("resize", fitArtboard);
+  window.visualViewport?.addEventListener("resize", fitArtboard);
+  window.visualViewport?.addEventListener("scroll", fitArtboard);
+
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
       refreshDay();
       loadWeather();
+      fitArtboard();
     }
   });
 
@@ -783,4 +821,5 @@
   }, 15 * 60 * 1000);
 
   requestLocation();
+  fitArtboard();
 })();

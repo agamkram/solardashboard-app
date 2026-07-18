@@ -26,13 +26,33 @@
       -webkit-font-smoothing: antialiased;
     }
 
+    /*
+     * Layout model (stop fighting devices):
+     * - PHONE: fluid full-bleed, fixed dens board (works — leave alone).
+     * - TABLET / DESKTOP: same phone artboard, scaled up proportionally
+     *   to fill the stage (full-bleed feel, no mushy stretched cells).
+     */
+    .fit-stage {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: var(--bg);
+      padding:
+        env(safe-area-inset-top)
+        env(safe-area-inset-right)
+        env(safe-area-inset-bottom)
+        env(safe-area-inset-left);
+      box-sizing: border-box;
+    }
+
     .app {
-      height: 100dvh;
-      width: 100%;
-      max-width: none; /* full width on iPad (no 430px phone cap) */
-      margin: 0 auto;
+      /* Artboard — phone proportions; density is designed here only */
+      width: 390px;
+      height: 844px;
       display: grid;
-      /* Classic board: cards size to content; sky fills what's left */
       grid-template-rows:
         auto
         auto
@@ -40,81 +60,28 @@
         auto
         auto;
       gap: 4px;
-      padding:
-        max(4px, env(safe-area-inset-top))
-        max(8px, env(safe-area-inset-right))
-        max(4px, env(safe-area-inset-bottom))
-        max(8px, env(safe-area-inset-left));
+      padding: 4px 5px 6px;
       box-sizing: border-box;
+      flex-shrink: 0;
+      transform-origin: center center;
     }
 
-    /* Tablet landscape / general tablet type nudge */
-    @media (min-width: 600px) {
-      html, body { font-size: 13px; }
-      .app { gap: 5px; }
-      .cell {
-        min-height: 50px;
-        padding: 6px 8px;
+    /* Phone: real full-bleed, no scale */
+    @media (max-width: 500px) {
+      .fit-stage {
+        display: block;
+        padding:
+          max(4px, env(safe-area-inset-top))
+          max(5px, env(safe-area-inset-right))
+          max(4px, env(safe-area-inset-bottom))
+          max(5px, env(safe-area-inset-left));
       }
-      .cell .v { font-size: 16px; }
-      .cell .v.sm { font-size: 13px; }
-    }
-
-    @media (min-width: 900px) {
-      html, body { font-size: 14px; }
-      .app { max-width: 960px; }
-    }
-
-    /*
-     * Tablet PORTRAIT: sky exactly 2in shorter than “fill the middle”;
-     * that 2in is split into the two card bands (no empty black row).
-     *
-     * rows: loc | conditions(1fr) | sky(fixed) | health(1fr) | skin
-     * sky height = 100dvh − 2in − loc/skin/gaps budget so the leftover
-     * for the two 1fr rows is ~2in + natural card room.
-     */
-    @media (min-width: 600px) and (orientation: portrait) {
       .app {
-        gap: 6px;
-        grid-template-rows:
-          auto
-          minmax(0, 1fr)
-          auto
-          minmax(0, 1fr)
-          auto;
-      }
-
-      .sky-block {
-        /*
-         * Full leftover sky would be ~100dvh − chrome. Subtract 2in.
-         * 26rem reserves loc + skin + gaps + floor for the two card bands
-         * so the 1fr rows actually receive that 2in (+ room to breathe).
-         */
-        height: calc(100dvh - 2in - 26rem);
-        min-height: 14rem;
-        box-sizing: border-box;
-      }
-
-      .band {
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-      }
-      .band .grid {
-        flex: 1 1 auto;
-        min-height: 0;
-        align-content: stretch;
-        gap: 5px;
-      }
-      .grid.conds { grid-template-rows: repeat(3, minmax(0, 1fr)); }
-      .grid.health { grid-template-rows: repeat(2, minmax(0, 1fr)); }
-      .band .cell {
-        min-height: 0;
+        width: 100%;
         height: 100%;
-        padding: 8px 10px;
+        max-width: none;
+        transform: none !important;
       }
-      .band .cell .v { font-size: 17px; }
-      .band .cell .v.sm { font-size: 14px; }
     }
 
     .loc {
@@ -177,12 +144,12 @@
     .cell {
       background: var(--cell);
       border: 1px solid var(--line);
-      padding: 5px 6px 6px;
+      padding: 4px 5px 5px;
       min-width: 0;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      min-height: 46px;
+      min-height: 44px;
     }
 
     .cell.span2 { grid-column: span 2; }
