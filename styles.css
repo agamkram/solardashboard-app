@@ -143,6 +143,7 @@
       gap: 6px;
       background: var(--cell);
       border: 1px solid var(--line);
+      border-radius: 5px;
       padding: 4px 7px;
       min-height: 28px;
     }
@@ -196,6 +197,7 @@
     .cell {
       background: var(--cell);
       border: 1px solid var(--line);
+      border-radius: 5px;
       padding: 4px 5px 5px;
       min-width: 0;
       display: flex;
@@ -257,7 +259,7 @@
       grid-template-rows: minmax(0, 1fr) auto;
       gap: 0;
       border: 1px solid var(--line);
-      border-radius: 12px;
+      border-radius: 5px;
       overflow: hidden;
       background: #0d1118;
     }
@@ -421,6 +423,7 @@
     .skin-bar {
       background: var(--cell);
       border: 1px solid var(--line);
+      border-radius: 5px;
       padding: 4px 6px 5px;
       display: flex;
       flex-direction: column;
