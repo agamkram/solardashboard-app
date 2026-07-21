@@ -4,9 +4,9 @@
       --cell-hi: #181e28;
       --line: #2a3140;
       --text: #e6ebf2;
-      --dim: #7a8496;
-      --faint: #4a5366;
       --amber: #f5a623;
+      --dim: var(--amber);
+      --faint: var(--amber);
       --uv: #b87cff;
       --ok: #3dce8a;
       --hot: #e85555;
