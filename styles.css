@@ -5,6 +5,7 @@
       --line: #2a3140;
       --text: #e6ebf2;
       --amber: #f5a623;
+      --warn: #ffe566;
       --dim: var(--amber);
       --faint: var(--amber);
       --uv: #b87cff;
@@ -233,7 +234,7 @@
     .cell .v.uv { color: var(--uv); }
     .cell .v.ok { color: var(--ok); }
     .cell .v.hot { color: var(--hot); }
-    .cell .v.amber { color: var(--amber); }
+    .cell .v.amber { color: var(--warn); }
     .cell .v.moon { color: var(--moon); }
 
     .cell .u {
