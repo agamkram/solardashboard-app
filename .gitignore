@@ -1,0 +1,4 @@
+.local-cert.pem
+.local-key.pem
+preview-*.png
+.DS_Store

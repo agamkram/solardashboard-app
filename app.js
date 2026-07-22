@@ -18,6 +18,167 @@
     { n: "VI", h: "never burns" },
   ];
 
+  const CELL_TIPS = {
+    uv: "Sunburn-causing UV strength right now (0–11+).",
+    uva: "Longer UV; ages skin, goes deeper.",
+    uvb: "Shorter UV; sunburn & vitamin D.",
+    cloud: "How cloudy the sky is. CSF = clear sky fraction.",
+    toa: "Solar power above the atmosphere.",
+    clear: "Ideal ground sunlight with no clouds.",
+    ground: "Sunlight at ground after air & clouds.",
+    pct: "Ground light now vs today’s noon peak.",
+    aqi: "US air quality from pollutants. Higher = worse.",
+    pollen: "Estimated pollen load for allergy risk.",
+    sunel: "Sun height above horizon. Az = direction.",
+    maxel: "Highest the sun gets today (solar noon).",
+    burn: "Minutes to sunburn for your skin type.",
+    vitd: "Vitamin D rate for full-body exposure.",
+    dose: "Time outdoors for about 1000 IU vitamin D.",
+    kp: "Geomagnetic activity; aurora & radio effects.",
+    risk: "Sunburn risk for your skin type & UV.",
+    altf: "Extra UV from elevation (thinner air).",
+    moonlight: "Moonlight strength from phase & height.",
+    moonel: "Moon height above horizon; phase below.",
+    skin: "Fitzpatrick I–VI rates how easily skin burns in sun. Sets time-to-burn, burn risk, and vitamin D estimates.",
+  };
+
+  function initCellTips() {
+    const hosts = Array.from(document.querySelectorAll("[data-tip]"));
+    let suppressClick = false;
+    let down = null;
+
+    function setOpen(host, open) {
+      hosts.forEach((h) => {
+        h.classList.toggle("is-explain", open && h === host);
+        h.setAttribute("aria-expanded", open && h === host ? "true" : "false");
+      });
+    }
+
+    function toggleHost(host) {
+      if (!host) return;
+      setOpen(host, !host.classList.contains("is-explain"));
+    }
+
+    function hostFromEvent(e) {
+      const path = typeof e.composedPath === "function" ? e.composedPath() : [];
+      for (const node of path) {
+        if (node && node.dataset && node.dataset.tip) return node;
+      }
+      const t = e.target;
+      if (t && typeof t.closest === "function") {
+        return t.closest("[data-tip]");
+      }
+      return null;
+    }
+
+    function isSkinSliderTarget(e) {
+      const path = typeof e.composedPath === "function" ? e.composedPath() : [];
+      for (const node of path) {
+        if (node && node.id === "skin-slider") return true;
+        if (node && node.matches && node.matches('input[type="range"]')) return true;
+      }
+      const t = e.target;
+      return !!(t && (t.id === "skin-slider" || t.closest?.("#skin-slider")));
+    }
+
+    hosts.forEach((host) => {
+      const key = host.dataset.tip;
+      const text = CELL_TIPS[key];
+      if (!text) return;
+
+      if (host.classList.contains("cell")) {
+        host.removeAttribute("role");
+        host.removeAttribute("tabindex");
+      }
+
+      const tip = document.createElement("span");
+      tip.className = "cell-tip";
+      tip.textContent = text;
+      tip.setAttribute("aria-hidden", "true");
+      host.appendChild(tip);
+
+      const label =
+        host.querySelector(".k, .lbl")?.textContent || "Metric";
+      if (host.classList.contains("cell")) {
+        host.setAttribute("aria-label", `${label}. Tap for explanation.`);
+      } else {
+        host.setAttribute(
+          "aria-label",
+          `${label}. Tap bar for explanation; use slider to set type.`
+        );
+      }
+    });
+
+    document.addEventListener(
+      "pointerdown",
+      (e) => {
+        const host = hostFromEvent(e);
+        if (!host || !hosts.includes(host)) {
+          down = null;
+          return;
+        }
+        // Keep Fitzpatrick slider usable — don't start a tip gesture on the thumb
+        if (
+          host.classList.contains("skin-bar") &&
+          !host.classList.contains("is-explain") &&
+          isSkinSliderTarget(e)
+        ) {
+          down = null;
+          return;
+        }
+        down = { host, x: e.clientX, y: e.clientY, id: e.pointerId };
+      },
+      true
+    );
+
+    document.addEventListener(
+      "pointerup",
+      (e) => {
+        if (!down || down.id !== e.pointerId) return;
+        const start = down;
+        down = null;
+        const dx = e.clientX - start.x;
+        const dy = e.clientY - start.y;
+        if (dx * dx + dy * dy > 100) return;
+        if (!start.host.contains(e.target) && hostFromEvent(e) !== start.host) {
+          return;
+        }
+        toggleHost(start.host);
+        suppressClick = true;
+        setTimeout(() => {
+          suppressClick = false;
+        }, 450);
+      },
+      true
+    );
+
+    document.addEventListener(
+      "pointercancel",
+      () => {
+        down = null;
+      },
+      true
+    );
+
+    document.addEventListener(
+      "click",
+      (e) => {
+        const host = hostFromEvent(e);
+        if (!host || !hosts.includes(host)) return;
+        if (
+          host.classList.contains("skin-bar") &&
+          !host.classList.contains("is-explain") &&
+          isSkinSliderTarget(e)
+        ) {
+          return;
+        }
+        if (host.classList.contains("cell")) e.preventDefault();
+        if (suppressClick) return;
+        toggleHost(host);
+      },
+      true
+    );
+  }
   const canvas = document.getElementById("sky-canvas");
   const ctx = canvas.getContext("2d");
   const slider = document.getElementById("time-slider");
@@ -712,7 +873,7 @@
       $("h-vitd").innerHTML = `0<span class="u">IU/h</span>`;
       $("h-dose").textContent = "—";
       $("h-risk").textContent = "None";
-      $("h-risk").className = "v sm ok";
+      $("h-risk").className = "v ok";
       $("h-risk-s").textContent = type.h;
     } else {
       const burnMin = Math.round(BURN_AT_UV1[skin - 1] / Math.max(uvUse, 0.1));
@@ -728,7 +889,7 @@
       $("h-risk").textContent =
         burnMin < 20 ? "High" : burnMin < 40 ? "Moderate" : "Lower";
       $("h-risk").className =
-        burnMin < 20 ? "v sm hot" : burnMin < 40 ? "v sm amber" : "v sm ok";
+        burnMin < 20 ? "v hot" : burnMin < 40 ? "v amber" : "v ok";
       $("h-risk-s").textContent = type.h;
     }
 
@@ -915,15 +1076,43 @@
     );
   }
 
+  function isTouchLike() {
+    return (
+      (navigator.maxTouchPoints || 0) > 0 ||
+      window.matchMedia("(pointer: coarse)").matches ||
+      window.matchMedia("(hover: none)").matches
+    );
+  }
+
+  /** iPad etc.: coarse/touch, larger than phone — not MacBook. */
+  function isTabletShell() {
+    if (isPhoneShell()) return false;
+    return (
+      isTouchLike() && Math.min(window.innerWidth, window.innerHeight) > 500
+    );
+  }
+
   function syncShellAttr() {
     const shell = isStandaloneShell() ? "standalone" : "browser";
+    const layout = isPhoneShell()
+      ? "phone"
+      : isTabletShell()
+        ? "tablet"
+        : "desktop";
     document.documentElement.dataset.shell = shell;
-    document.body && (document.body.dataset.shell = shell);
+    document.documentElement.dataset.layout = layout;
+    if (document.body) {
+      document.body.dataset.shell = shell;
+      document.body.dataset.layout = layout;
+    }
   }
 
   let fitRaf = 0;
   let hasRevealed = false;
   let revealFailsafe = null;
+  let revealTimer = null;
+  let lastFitKey = "";
+  let stableFitCount = 0;
 
   function scheduleFit() {
     cancelAnimationFrame(fitRaf);
@@ -941,9 +1130,24 @@
       clearTimeout(revealFailsafe);
       revealFailsafe = null;
     }
+    if (revealTimer != null) {
+      clearTimeout(revealTimer);
+      revealTimer = null;
+    }
   }
 
-  function fitArtboard() {
+  /** Hold hidden until VV size stops changing — kills Safari flash/hop. */
+  function armReveal(appEl) {
+    if (hasRevealed || !appEl) return;
+    clearTimeout(revealTimer);
+    revealTimer = setTimeout(() => {
+      revealTimer = null;
+      // One last measure after Safari chrome settles, then show
+      fitArtboard(true);
+    }, 140);
+  }
+
+  function fitArtboard(fromRevealSettle = false) {
     const stage = document.getElementById("fit-stage");
     const appEl = document.getElementById("app");
     if (!stage || !appEl) return;
@@ -955,6 +1159,7 @@
 
     if (phone) {
       appEl.style.transform = "";
+      appEl.style.zoom = "";
       appEl.style.width = "";
       appEl.style.height = "";
 
@@ -967,11 +1172,13 @@
         stage.style.top = `${Math.round(vv.offsetTop)}px`;
         stage.style.left = `${Math.round(vv.offsetLeft)}px`;
         stage.style.width = `${Math.round(vv.width)}px`;
-        // Prefer VV height; never use layout innerHeight alone on iOS Safari.
+        // Exact VV height — never extend (clips under home indicator).
+        // Bottom air = CSS padding only. See supermoon-bottom-black-strip-fix.txt
         stage.style.height = `${Math.round(vv.height)}px`;
         stage.style.right = "auto";
         stage.style.bottom = "auto";
         stage.style.margin = "0";
+        stage.style.paddingBottom = "";
       } else {
         stage.classList.remove("fit-stage--vv");
         stage.style.position = "fixed";
@@ -980,12 +1187,26 @@
         stage.style.height = "";
         stage.style.top = "";
         stage.style.left = "";
+        stage.style.paddingBottom = "";
       }
+
+      const fitKey = vv
+        ? `${Math.round(vv.width)}x${Math.round(vv.height)}@${Math.round(vv.offsetTop)}:${standalone ? 1 : 0}`
+        : `novv:${window.innerWidth}x${window.innerHeight}`;
+      if (fitKey === lastFitKey) stableFitCount += 1;
+      else {
+        lastFitKey = fitKey;
+        stableFitCount = 0;
+      }
+
       update();
-      // One more frame so flex/sky sizes settle before first paint
       requestAnimationFrame(() => {
         update();
-        revealApp(appEl);
+        if (fromRevealSettle || stableFitCount >= 1) {
+          revealApp(appEl);
+        } else {
+          armReveal(appEl);
+        }
       });
       return;
     }
@@ -1001,6 +1222,7 @@
     stage.style.width = "";
     stage.style.height = "";
     stage.style.margin = "";
+    stage.style.paddingBottom = "";
 
     const ART_W = 390;
     const ART_H = 844;
@@ -1012,7 +1234,17 @@
     if (sw < 2 || sh < 2) return;
 
     const scale = Math.min(sw / ART_W, sh / ART_H);
-    appEl.style.transform = `scale(${scale})`;
+    // iOS: transform scale misaligns touch targets; zoom keeps hits on the visuals
+    const touchUI =
+      (navigator.maxTouchPoints || 0) > 0 ||
+      window.matchMedia("(pointer: coarse)").matches;
+    if (touchUI && typeof CSS !== "undefined" && CSS.supports?.("zoom", "1")) {
+      appEl.style.transform = "";
+      appEl.style.zoom = String(scale);
+    } else {
+      appEl.style.zoom = "";
+      appEl.style.transform = `scale(${scale})`;
+    }
     update();
     requestAnimationFrame(() => {
       update();
@@ -1060,11 +1292,12 @@
   // Kp is global — load even before GPS settles
   loadKp().then(() => update());
 
+  initCellTips();
   requestLocation();
   scheduleFit();
   // Never leave a blank screen if fit is slow
   revealFailsafe = setTimeout(() => {
     const appEl = document.getElementById("app");
     if (appEl) revealApp(appEl);
-  }, 400);
+  }, 700);
 })();

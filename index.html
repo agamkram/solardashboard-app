@@ -13,7 +13,7 @@
   <link rel="icon" type="image/png" href="apple-touch-icon.png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=pad2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=IBM+Plex+Mono:wght@500;600&family=Michroma&display=swap" rel="stylesheet">
@@ -33,66 +33,66 @@
     <div class="band">
       <div class="band-label">Conditions</div>
       <div class="grid conds">
-        <div class="cell">
-          <div class="k">UV index</div>
-          <div class="v uv" id="c-uv">—</div>
-          <div class="s" id="c-uv-s">—</div>
-        </div>
-        <div class="cell">
-          <div class="k">UVA</div>
-          <div class="v sm" id="c-uva">—</div>
-          <div class="s">estimate</div>
-        </div>
-        <div class="cell">
-          <div class="k">UVB</div>
-          <div class="v sm" id="c-uvb">—</div>
-          <div class="s">estimate</div>
-        </div>
-        <div class="cell">
-          <div class="k">Cloud cover</div>
-          <div class="v" id="c-cloud">—</div>
-          <div class="s" id="c-csf">csf —</div>
-        </div>
-        <div class="cell">
-          <div class="k">Irradiance</div>
-          <div class="v sm" id="c-toa">—</div>
-          <div class="s">top of atmosphere</div>
-        </div>
-        <div class="cell">
-          <div class="k">Irradiance</div>
-          <div class="v sm" id="c-clear">—</div>
-          <div class="s">ground · ideal</div>
-        </div>
-        <div class="cell">
-          <div class="k">Irradiance</div>
-          <div class="v sm" id="c-ground">—</div>
-          <div class="s">at your feet</div>
-        </div>
-        <div class="cell">
-          <div class="k">Ground sunlight</div>
-          <div class="v" id="c-pct">—</div>
-          <div class="s">of solar noon</div>
-        </div>
-        <div class="cell">
-          <div class="k">Air quality index</div>
-          <div class="v" id="c-aqi">—</div>
-          <div class="s" id="c-aqi-s">—</div>
-        </div>
-        <div class="cell">
-          <div class="k">Pollen</div>
-          <div class="v sm" id="c-pollen">—</div>
-          <div class="s" id="c-pollen-s">—</div>
-        </div>
-        <div class="cell">
-          <div class="k">Sun elevation</div>
-          <div class="v" id="c-sunel">—</div>
-          <div class="s" id="c-sunaz">az —</div>
-        </div>
-        <div class="cell">
-          <div class="k">Max elevation</div>
-          <div class="v" id="c-maxel">—</div>
-          <div class="s">solar noon</div>
-        </div>
+        <button type="button" class="cell" data-tip="uv" aria-expanded="false">
+          <span class="k">UV index</span>
+          <span class="v uv" id="c-uv">—</span>
+          <span class="s" id="c-uv-s">—</span>
+        </button>
+        <button type="button" class="cell" data-tip="uva" aria-expanded="false">
+          <span class="k">UVA</span>
+          <span class="v" id="c-uva">—</span>
+          <span class="s">estimate</span>
+        </button>
+        <button type="button" class="cell" data-tip="uvb" aria-expanded="false">
+          <span class="k">UVB</span>
+          <span class="v" id="c-uvb">—</span>
+          <span class="s">estimate</span>
+        </button>
+        <button type="button" class="cell" data-tip="cloud" aria-expanded="false">
+          <span class="k">Cloud cover</span>
+          <span class="v" id="c-cloud">—</span>
+          <span class="s" id="c-csf">csf —</span>
+        </button>
+        <button type="button" class="cell" data-tip="toa" aria-expanded="false">
+          <span class="k">Irradiance</span>
+          <span class="v" id="c-toa">—</span>
+          <span class="s">top of atmosphere</span>
+        </button>
+        <button type="button" class="cell" data-tip="clear" aria-expanded="false">
+          <span class="k">Irradiance</span>
+          <span class="v" id="c-clear">—</span>
+          <span class="s">ground · ideal</span>
+        </button>
+        <button type="button" class="cell" data-tip="ground" aria-expanded="false">
+          <span class="k">Irradiance</span>
+          <span class="v" id="c-ground">—</span>
+          <span class="s">at your feet</span>
+        </button>
+        <button type="button" class="cell" data-tip="pct" aria-expanded="false">
+          <span class="k">Ground sunlight</span>
+          <span class="v" id="c-pct">—</span>
+          <span class="s">of solar noon</span>
+        </button>
+        <button type="button" class="cell" data-tip="aqi" aria-expanded="false">
+          <span class="k">Air quality index</span>
+          <span class="v" id="c-aqi">—</span>
+          <span class="s" id="c-aqi-s">—</span>
+        </button>
+        <button type="button" class="cell" data-tip="pollen" aria-expanded="false">
+          <span class="k">Pollen</span>
+          <span class="v" id="c-pollen">—</span>
+          <span class="s" id="c-pollen-s">—</span>
+        </button>
+        <button type="button" class="cell" data-tip="sunel" aria-expanded="false">
+          <span class="k">Sun elevation</span>
+          <span class="v" id="c-sunel">—</span>
+          <span class="s" id="c-sunaz">az —</span>
+        </button>
+        <button type="button" class="cell" data-tip="maxel" aria-expanded="false">
+          <span class="k">Max elevation</span>
+          <span class="v" id="c-maxel">—</span>
+          <span class="s">solar noon</span>
+        </button>
       </div>
     </div>
 
@@ -126,50 +126,50 @@
     <div class="band">
       <div class="band-label">Skin & exposure</div>
       <div class="grid health">
-        <div class="cell">
-          <div class="k">Time to burn</div>
-          <div class="v hot" id="h-burn">—</div>
-          <div class="s" id="h-burn-s">—</div>
-        </div>
-        <div class="cell">
-          <div class="k">Vit D rate</div>
-          <div class="v sm" id="h-vitd">—</div>
-          <div class="s">full body</div>
-        </div>
-        <div class="cell">
-          <div class="k">Useful dose</div>
-          <div class="v sm" id="h-dose">—</div>
-          <div class="s">to ~1000 IU</div>
-        </div>
-        <div class="cell">
-          <div class="k">Kp index</div>
-          <div class="v" id="h-kp">—</div>
-          <div class="s" id="h-kp-s">geomagnetic</div>
-        </div>
-        <div class="cell">
-          <div class="k">Burn risk</div>
-          <div class="v sm" id="h-risk">—</div>
-          <div class="s" id="h-risk-s">—</div>
-        </div>
-        <div class="cell">
-          <div class="k">Altitude factor</div>
-          <div class="v" id="h-altf">—</div>
-          <div class="s" id="h-altf-s">—</div>
-        </div>
-        <div class="cell">
-          <div class="k">Moonlight</div>
-          <div class="v moon sm" id="h-moon">—</div>
-          <div class="s" id="h-moon-s">—</div>
-        </div>
-        <div class="cell">
-          <div class="k">Moon elevation</div>
-          <div class="v moon" id="c-moonel">—</div>
-          <div class="s" id="c-moonph">—</div>
-        </div>
+        <button type="button" class="cell" data-tip="burn" aria-expanded="false">
+          <span class="k">Time to burn</span>
+          <span class="v hot" id="h-burn">—</span>
+          <span class="s" id="h-burn-s">—</span>
+        </button>
+        <button type="button" class="cell" data-tip="vitd" aria-expanded="false">
+          <span class="k">Vit D rate</span>
+          <span class="v" id="h-vitd">—</span>
+          <span class="s">full body</span>
+        </button>
+        <button type="button" class="cell" data-tip="dose" aria-expanded="false">
+          <span class="k">Useful dose</span>
+          <span class="v" id="h-dose">—</span>
+          <span class="s">to ~1000 IU</span>
+        </button>
+        <button type="button" class="cell" data-tip="kp" aria-expanded="false">
+          <span class="k">Kp index</span>
+          <span class="v" id="h-kp">—</span>
+          <span class="s" id="h-kp-s">geomagnetic</span>
+        </button>
+        <button type="button" class="cell" data-tip="risk" aria-expanded="false">
+          <span class="k">Burn risk</span>
+          <span class="v" id="h-risk">—</span>
+          <span class="s" id="h-risk-s">—</span>
+        </button>
+        <button type="button" class="cell" data-tip="altf" aria-expanded="false">
+          <span class="k">Altitude factor</span>
+          <span class="v" id="h-altf">—</span>
+          <span class="s" id="h-altf-s">—</span>
+        </button>
+        <button type="button" class="cell" data-tip="moonlight" aria-expanded="false">
+          <span class="k">Moonlight</span>
+          <span class="v moon" id="h-moon">—</span>
+          <span class="s" id="h-moon-s">—</span>
+        </button>
+        <button type="button" class="cell" data-tip="moonel" aria-expanded="false">
+          <span class="k">Moon elevation</span>
+          <span class="v moon" id="c-moonel">—</span>
+          <span class="s" id="c-moonph">—</span>
+        </button>
       </div>
     </div>
 
-    <div class="skin-bar">
+    <div class="skin-bar" data-tip="skin" aria-expanded="false">
       <div class="lbl">Skin type · Fitzpatrick</div>
       <div class="skin-slider-col">
         <div class="skin-scale" aria-hidden="true">
@@ -203,7 +203,7 @@
   <script src="solar.js"></script>
   <script src="moon.js"></script>
   <script src="api.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=pad1"></script>
   <script>
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
   </script>
