@@ -85,7 +85,8 @@
       margin: 0;
       font-family: "Michroma", "DM Sans", system-ui, sans-serif;
       font-weight: 400;
-      font-size: clamp(1.05rem, 3.2vmin, 1.35rem); /* match LightSlice title */
+      /* px — SD root is 12px; rem would shrink vs LightSlice (16px root) */
+      font-size: clamp(16.8px, 3.2vmin, 21.6px);
       letter-spacing: 0.1em;
       line-height: 1.15;
       color: var(--text);
