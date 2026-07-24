@@ -90,7 +90,7 @@
       line-height: 1.15;
       color: var(--text);
       text-align: center;
-      text-transform: uppercase;
+      text-transform: none;
     }
 
     /*
