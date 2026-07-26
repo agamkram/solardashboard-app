@@ -1,0 +1,21 @@
+{
+  "name": "Solar Dashboard",
+  "short_name": "Solar Dash",
+  "description": "UV, irradiance, air quality, pollen, and sun exposure for your location",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0c10",
+  "theme_color": "#0a0c10",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

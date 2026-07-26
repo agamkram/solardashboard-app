@@ -1,0 +1,684 @@
+:root {
+      --bg: #0a0c10;
+      --cell: #12161e;
+      --cell-hi: #181e28;
+      --line: #2a3140;
+      --text: #e6ebf2;
+      --amber: #f5a623;
+      --dim: #4aa6d4;
+      --faint: var(--dim);
+      --uv: #b87cff;
+      --ok: #3dce8a;
+      --hot: #e85555;
+      --moon: #c8d0e0;
+      --font: "DM Sans", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 12px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /*
+     * Layout model (stop fighting devices):
+     * - PHONE: fluid full-bleed, fixed dens board (works — leave alone).
+     * - TABLET / DESKTOP: same phone artboard, scaled up proportionally
+     *   to fill the stage (full-bleed feel, no mushy stretched cells).
+     */
+    .fit-stage {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: var(--bg);
+      padding:
+        env(safe-area-inset-top)
+        env(safe-area-inset-right)
+        env(safe-area-inset-bottom)
+        env(safe-area-inset-left);
+      box-sizing: border-box;
+    }
+
+    .app {
+      /* Artboard — phone proportions; density is designed here only */
+      width: 390px;
+      height: 844px;
+      display: grid;
+      grid-template-rows:
+        auto   /* title */
+        auto   /* location */
+        auto   /* conditions */
+        minmax(0, 1fr) /* sky */
+        auto   /* health */
+        auto;  /* skin */
+      gap: 4px;
+      padding: 4px 5px 6px;
+      box-sizing: border-box;
+      flex-shrink: 0;
+      transform-origin: center center;
+    }
+
+    /* Hide until first fit — kills startup resize jump (same idea as Solar Light) */
+    .app:not(.is-fitted) {
+      visibility: hidden;
+    }
+
+    /* Michroma like hub; solid fill (not stroke/wireframe); row ~⅜″ */
+    .app-header {
+      height: 0.375in;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .app-title {
+      margin: 0;
+      font-family: "Michroma", "DM Sans", system-ui, sans-serif;
+      font-weight: 400;
+      /* px — SD root is 12px; rem would shrink vs LightSlice (16px root) */
+      font-size: clamp(16.8px, 3.2vmin, 21.6px);
+      letter-spacing: 0.1em;
+      line-height: 1.15;
+      color: var(--text);
+      text-align: center;
+      text-transform: none;
+    }
+
+    /*
+     * Phone shell (auto-handled in app.js — no human measuring):
+     * - .fit-stage--vv      → sized to visualViewport (Safari tab chrome)
+     * - .fit-stage--standalone → Home Screen PWA (no browser bottom nav)
+     * - Never combine VV height + large safe-area bottom pad.
+     */
+    /* Match JS isPhoneShell — portrait OR short landscape */
+    @media (max-width: 500px), ((max-height: 500px) and (pointer: coarse)) {
+      .fit-stage {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        padding:
+          max(0.1in, env(safe-area-inset-top, 0px))
+          max(0.1in, env(safe-area-inset-right, 0px))
+          0
+          max(0.1in, env(safe-area-inset-left, 0px));
+      }
+      /*
+       * VV pin: stage top/height already track visualViewport — do NOT also
+       * pad env(safe-area-inset-top) (double-count → hop on Safari startup).
+       * Bottom pad 0 — empty gap was often flex shortfall, not needed air.
+       * PWA home indicator: pad the Fitz bar, not the stage (see note on Desktop).
+       */
+      .fit-stage.fit-stage--vv {
+        padding-top: 0.05in;
+        padding-left: max(0.08in, env(safe-area-inset-left, 0px));
+        padding-right: max(0.08in, env(safe-area-inset-right, 0px));
+        padding-bottom: 0;
+      }
+      .fit-stage.fit-stage--standalone.fit-stage--vv {
+        padding-top: max(0.08in, env(safe-area-inset-top, 0px));
+        /* hair of stage air for home indicator — not padding inside Fitz box */
+        padding-bottom: 0.045in;
+      }
+      .app {
+        width: 100%;
+        /* Fill stage — height:auto !important left a dead band under Fitz */
+        flex: 1 1 0;
+        align-self: stretch;
+        min-height: 0;
+        max-width: none;
+        max-height: none;
+        height: 100%;
+        transform: none !important;
+        zoom: normal;
+        padding: 0;
+        gap: 3px;
+      }
+      .skin-bar {
+        margin-bottom: 0;
+        border-bottom: none;
+      }
+    }
+
+    .loc {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 6px;
+      background: var(--cell);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 4px 7px;
+      min-height: 28px;
+    }
+
+    .loc button {
+      border: none;
+      background: none;
+      color: var(--amber);
+      font: inherit;
+      font-size: 13px;
+      line-height: 1;
+      cursor: default;
+      padding: 0;
+    }
+
+    .loc .place {
+      font-weight: 600;
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .loc .meta {
+      color: var(--dim);
+      font-weight: 400;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 10px;
+    }
+
+    .loc .edit {
+      color: var(--dim);
+      font-size: 10px;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .band-label {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--faint);
+      padding: 1px 2px 0;
+    }
+
+    .grid { display: grid; gap: 3px; }
+    .grid.conds { grid-template-columns: repeat(4, 1fr); }
+    .grid.health { grid-template-columns: repeat(4, 1fr); }
+
+    .cell {
+      position: relative;
+      appearance: none;
+      -webkit-appearance: none;
+      background: var(--cell);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 2px;
+      min-width: 0;
+      width: auto;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 48px;
+      font: inherit;
+      color: inherit;
+      text-align: left;
+      line-height: 1;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+      outline: none;
+    }
+
+    /* Full-cell hit layer — iOS WebKit often misses taps on flex children inside buttons */
+    .cell::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 5;
+    }
+
+    .cell:focus-visible {
+      border-color: var(--dim);
+    }
+
+    .cell.is-explain {
+      background: var(--cell-hi);
+      border-color: var(--dim);
+    }
+
+    .cell.is-explain > .k,
+    .cell.is-explain > .v,
+    .cell.is-explain > .s {
+      visibility: hidden;
+    }
+
+    .cell-tip {
+      display: none;
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 4;
+      padding: 4px 5px;
+      font-size: 9px;
+      font-weight: 600;
+      line-height: 1.25;
+      color: var(--text);
+      align-items: center;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .cell.is-explain .cell-tip,
+    .skin-bar.is-explain .cell-tip {
+      display: flex;
+    }
+
+    /* Keys + subs: same type — only case differs */
+    .cell .k,
+    .cell .s {
+      font-size: 8.25px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      color: var(--dim);
+      line-height: 1.15;
+      white-space: normal;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+
+    .cell .k {
+      text-transform: uppercase;
+    }
+
+    .cell .s {
+      text-transform: lowercase;
+      padding-bottom: 1px;
+      line-height: 1.2;
+    }
+
+    .cell .v {
+      flex: 1 1 auto;
+      display: flex;
+      align-items: center;
+      font-family: "IBM Plex Mono", monospace;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin: 0;
+      min-height: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cell .v.uv { color: var(--uv); }
+    .cell .v.ok { color: var(--ok); }
+    .cell .v.hot { color: var(--hot); }
+    .cell .v.amber { color: var(--amber); }
+    .cell .v.moon { color: var(--moon); }
+
+    .cell .u {
+      font-size: 0.72em;
+      font-weight: 500;
+      color: var(--dim);
+      margin-left: 1px;
+    }
+
+    /* ── Sky + time (takes remaining height — the centerpiece) ── */
+    .sky-block {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+      gap: 0;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      overflow: hidden;
+      background: #0d1118;
+    }
+
+    .sky-panel {
+      position: relative;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    #sky-canvas {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .controls {
+      flex-shrink: 0;
+      padding: 3px 2px 2px;
+    }
+
+    .time-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 3px;
+    }
+
+    .current-time {
+      font-size: 1.15rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .now-btn {
+      font-family: var(--font);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid rgba(245, 166, 35, 0.4);
+      background: rgba(245, 166, 35, 0.12);
+      color: var(--amber);
+      cursor: pointer;
+    }
+
+    .now-btn:hover {
+      background: rgba(245, 166, 35, 0.22);
+      border-color: var(--amber);
+    }
+
+    .slider-wrap { margin-bottom: 2px; }
+
+    .slider-track {
+      position: relative;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      --sunrise-pos: 28.3%;
+      --noon-pos: 56.1%;
+      --sunset-pos: 84.0%;
+    }
+
+    /* Marker sits above the range track (track paint hid the old underlay dot). */
+    .noon-dot {
+      position: absolute;
+      left: var(--noon-pos);
+      top: 50%;
+      width: 9px;
+      height: 9px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: #fff4c8;
+      border: 2px solid var(--amber);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.45),
+        0 0 8px rgba(245, 166, 35, 0.75);
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    #time-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(
+        90deg,
+        #1a2744 0%,
+        #3d5a80 calc(var(--sunrise-pos) - 4%),
+        #5a7a50 var(--sunrise-pos),
+        #3d5a80 calc(var(--noon-pos) - 10%),
+        #f5a623 var(--noon-pos),
+        #3d5a80 calc(var(--sunset-pos) - 4%),
+        #5a4a30 var(--sunset-pos),
+        #1a2744 100%
+      );
+      outline: none;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    #time-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fff8e7, var(--amber));
+      box-shadow:
+        0 0 0 3px rgba(245, 166, 35, 0.35),
+        0 2px 8px rgba(0, 0, 0, 0.35);
+      cursor: grab;
+    }
+
+    #time-slider::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border: none;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fff8e7, var(--amber));
+      box-shadow:
+        0 0 0 3px rgba(245, 166, 35, 0.35),
+        0 2px 8px rgba(0, 0, 0, 0.35);
+      cursor: grab;
+    }
+
+    .slider-top {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 0;
+    }
+
+    .slider-top #noon-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--amber);
+    }
+
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+      font-size: 0.68rem;
+      color: var(--dim);
+    }
+
+    .day-length {
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--dim);
+      text-transform: uppercase;
+    }
+
+    .skin-bar {
+      position: relative;
+      background: var(--cell);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 4px 6px 5px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .skin-bar.is-explain {
+      background: var(--cell-hi);
+      border-color: var(--dim);
+    }
+
+    .skin-bar.is-explain > .lbl,
+    .skin-bar.is-explain > .skin-slider-col {
+      visibility: hidden;
+    }
+
+    .skin-bar .cell-tip {
+      font-size: 9px;
+      line-height: 1.35;
+    }
+
+    .skin-bar .lbl {
+      font-size: 8px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .skin-slider-col {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .skin-scale {
+      display: flex;
+      justify-content: space-between;
+      font-size: 8px;
+      color: var(--faint);
+      font-family: "IBM Plex Mono", monospace;
+      padding: 0 1px;
+    }
+
+    .skin-bar input[type="range"] {
+      width: 100%;
+      height: 14px;
+      accent-color: var(--amber);
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .skin-swatches {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 1px;
+    }
+
+    .skin-swatches span {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+    }
+
+    .skin-swatches span:nth-child(1) { background: #f5e6d3; }
+    .skin-swatches span:nth-child(2) { background: #e8c4a0; }
+    .skin-swatches span:nth-child(3) { background: #d4a574; }
+    .skin-swatches span:nth-child(4) { background: #b07a4a; }
+    .skin-swatches span:nth-child(5) { background: #8b5a2b; }
+    .skin-swatches span:nth-child(6) { background: #3d2314; }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+
+/* Location dialog */
+.location-dialog {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--cell);
+  color: var(--text);
+  padding: 0;
+  max-width: min(420px, 96vw);
+  width: 100%;
+}
+.location-dialog::backdrop { background: rgba(0,0,0,0.65); }
+.location-dialog form { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.location-dialog h2 { font-size: 1rem; font-weight: 700; }
+.location-dialog .map-hint { font-size: 0.75rem; color: var(--dim); }
+.location-map { height: 220px; border-radius: 8px; border: 1px solid var(--line); z-index: 0; }
+.map-coords { font-family: "IBM Plex Mono", monospace; font-size: 0.75rem; color: var(--dim); }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+.primary-btn, .secondary-btn {
+  font-family: var(--font);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.primary-btn {
+  border: 1px solid rgba(245, 166, 35, 0.5);
+  background: rgba(245, 166, 35, 0.18);
+  color: var(--amber);
+}
+.secondary-btn {
+  border: 1px solid var(--line);
+  background: var(--cell-hi);
+  color: var(--dim);
+}
+.loc button { cursor: pointer; }
+.loc .edit { cursor: pointer; }
+
+/*
+ * Tablet (iPad): same 390 artboard only upscales ~1.1–1.3×, so phone type
+ * feels tiny on glass. Bump type on data-layout=tablet only — phone + MB unchanged.
+ */
+html[data-layout="tablet"] .cell {
+  min-height: 66px;
+  padding: 4px;
+}
+html[data-layout="tablet"] .cell .k,
+html[data-layout="tablet"] .cell .s {
+  font-size: 13px;
+}
+html[data-layout="tablet"] .cell .v {
+  font-size: 20px;
+}
+html[data-layout="tablet"] .cell-tip {
+  font-size: 13px;
+}
+html[data-layout="tablet"] .band-label {
+  font-size: 13px;
+}
+html[data-layout="tablet"] .loc .place {
+  font-size: 15px;
+}
+html[data-layout="tablet"] .loc .meta,
+html[data-layout="tablet"] .loc .edit {
+  font-size: 13px;
+}
+html[data-layout="tablet"] .skin-bar .lbl,
+html[data-layout="tablet"] .skin-scale {
+  font-size: 12px;
+}
+html[data-layout="tablet"] .current-time {
+  font-size: 1.5rem;
+}
+html[data-layout="tablet"] .slider-top #noon-label,
+html[data-layout="tablet"] .slider-labels {
+  font-size: 0.9rem;
+}
+html[data-layout="tablet"] .day-length {
+  font-size: 0.8rem;
+}
+
