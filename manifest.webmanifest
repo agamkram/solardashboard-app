@@ -1,6 +1,6 @@
 {
-  "name": "Solar Dashboard",
-  "short_name": "Solar Dash",
+  "name": "SolarDashboard",
+  "short_name": "SolarDashboard",
   "description": "UV, irradiance, air quality, pollen, and sun exposure for your location",
   "start_url": "/",
   "display": "standalone",
